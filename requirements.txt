@@ -1,0 +1,13 @@
+cutadapt==2.4
+dnaio==0.3
+docutils==0.14
+lockfile==0.12.2
+luigi==2.8.7
+numpy==1.16.4
+pandas==0.24.2
+python-daemon==2.1.2
+python-dateutil==2.8.0
+pytz==2019.1
+six==1.12.0
+tornado==4.5.3
+xopen==0.7.3
