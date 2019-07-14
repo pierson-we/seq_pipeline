@@ -1,4 +1,5 @@
 module load CBC
+module load python
 module load udocker
 
 # udocker load -i /data/wpierson/seq_pipeline/pipeline_test_1.1.tar
