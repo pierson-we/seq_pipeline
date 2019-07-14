@@ -1,3 +1,3 @@
 . /root/.profile
-cd /root/pipeline/code/
-python3 ./pipeline_code/run.py "$@"
+cd /root
+python3 ./seq_pipeline/run.py "$@"
