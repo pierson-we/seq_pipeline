@@ -13,8 +13,6 @@ def run_pipeline(args):
 	sys.path.append(os.getcwd())
 	sys.path.append('./')
 	
-
-
 	# timestamp = str(int(time.time()))
 	sample_dict = {}
 
@@ -36,9 +34,7 @@ def run_pipeline(args):
 		sample_threads = max(1, args.max_threads//len(sample_dict.keys()))
 
 	worker_scheduler_factory = luigi.interface._WorkerSchedulerFactory()
-
-
-	luigi.interface.core.threads = luigi.parameter.IntParameter(default=args.max_threads, description='total number of threads available for use by the pipeline', config_path=dict(section='resources', name='threads'),)
+	# luigi.interface.core.threads = luigi.parameter.IntParameter(default=args.max_threads, description='total number of threads available for use by the pipeline', config_path=dict(section='resources', name='threads'),)
 
 	luigi.build([cases(sample_dict=sample_dict, project_dir=args.project_dir, sample_threads=sample_threads, cwd=os.getcwd())], workers=args.workers, local_scheduler=args.local_scheduler, worker_scheduler_factory=worker_scheduler_factory) # , workers=args.workers #, scheduler_port=int(args.port)) # workers=sample_threads , resources={'threads': args.max_threads}
 
@@ -169,6 +165,16 @@ if __name__ == '__main__':
 	parser.add_argument('--port', action='store', dest='port', default='8082', help='If using the central luigi scheduler, use this parameter to specify a custom port for the luigi server to operate on (defaults to 8082)')
 
 	args = parser.parse_args()
+
+	with open(os.environ('LUIGI_CONFIG_PATH'), 'a') as f:
+		f.write('\n[resources]\nthreads=%s' % args.max_threads)
+	# if not '[resources]' in config:
+	# 	with open(os.environ('LUIGI_CONFIG_PATH'), 'a') as f:
+	# 		f.write('\n[resources]')
+	# if not 'threads' in config:
+	# 	with open(os.environ('LUIGI_CONFIG_PATH'), 'a') as f:
+	# 		f.write('\nthreads=%s' % args.max_threads)
+
 
 	run_pipeline(args)
 	# luigi.build([bam_processing.cases(max_threads=args.max_threads, project_dir=args.project_dir, sample_dir=args.sample_dir, threads_per_sample=args.threads_per_sample, timestamp=timestamp)], workers=args.workers, local_scheduler=args.local_scheduler)
