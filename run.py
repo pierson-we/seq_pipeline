@@ -37,7 +37,12 @@ def run_pipeline(args):
 
 	worker_scheduler_factory = luigi.interface._WorkerSchedulerFactory()
 
-	luigi.build([cases(sample_dict=sample_dict, project_dir=args.project_dir, sample_threads=sample_threads, cwd=os.getcwd())], workers=args.workers, local_scheduler=args.local_scheduler, worker_scheduler_factory=worker_scheduler_factory) # , workers=args.workers #, scheduler_port=int(args.port)) # workers=sample_threads , resources={'threads': args.max_threads}
+	class resources(luigi.Config):
+		threads = luigi.IntParameter(args.max_threads)
+
+	resources()
+
+	luigi.build([resources(), cases(sample_dict=sample_dict, project_dir=args.project_dir, sample_threads=sample_threads, cwd=os.getcwd())], workers=args.workers, local_scheduler=args.local_scheduler, worker_scheduler_factory=worker_scheduler_factory) # , workers=args.workers #, scheduler_port=int(args.port)) # workers=sample_threads , resources={'threads': args.max_threads}
 
 class cases(luigi.Task):
 	# generated parameters
@@ -166,11 +171,6 @@ if __name__ == '__main__':
 	parser.add_argument('--port', action='store', dest='port', default='8082', help='If using the central luigi scheduler, use this parameter to specify a custom port for the luigi server to operate on (defaults to 8082)')
 
 	args = parser.parse_args()
-
-	class resources(luigi.Config):
-		threads = luigi.IntParameter(args.max_threads)
-
-	print(resources().threads)
 
 	run_pipeline(args)
 	# luigi.build([bam_processing.cases(max_threads=args.max_threads, project_dir=args.project_dir, sample_dir=args.sample_dir, threads_per_sample=args.threads_per_sample, timestamp=timestamp)], workers=args.workers, local_scheduler=args.local_scheduler)
