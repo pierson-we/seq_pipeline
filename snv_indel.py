@@ -62,6 +62,7 @@ class mutect2(luigi.Task):
 		return {'threads': self.cfg['max_threads']}
 
 	def requires(self):
+		if 
 		return {'preprocess': preprocess(case=self.case, sample=self.sample, cfg=self.cfg), 'mutect2_pon': mutect2_pon(cfg=self.cfg)}
 
 	def output(self):
