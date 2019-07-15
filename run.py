@@ -37,10 +37,7 @@ def run_pipeline(args):
 
 	worker_scheduler_factory = luigi.interface._WorkerSchedulerFactory()
 
-	run_resources = resources(args.max_threads)
-	print(run_resources.threads)
-
-	luigi.build([cases(sample_dict=sample_dict, project_dir=args.project_dir, sample_threads=sample_threads, cwd=os.getcwd())], workers=args.workers, local_scheduler=args.local_scheduler, worker_scheduler_factory=worker_scheduler_factory, resources=run_resources) # , workers=args.workers #, scheduler_port=int(args.port)) # workers=sample_threads , resources={'threads': args.max_threads}
+	luigi.build([cases(sample_dict=sample_dict, project_dir=args.project_dir, sample_threads=sample_threads, cwd=os.getcwd())], workers=args.workers, local_scheduler=args.local_scheduler, worker_scheduler_factory=worker_scheduler_factory) # , workers=args.workers #, scheduler_port=int(args.port)) # workers=sample_threads , resources={'threads': args.max_threads}
 
 class cases(luigi.Task):
 	# generated parameters
@@ -149,13 +146,6 @@ class cases(luigi.Task):
 	def output(self):
 		return self.input()
 
-class resources(luigi.Config):
-	def __init__(self, max_threads):
-		super(resources, self).__init__(max_threads)
-		self.threads = max_threads
-
-	threads = luigi.IntParameter()
-
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='wes pipeline parser')
 	parser.add_argument('-O', action='store', dest='project_dir', default=os.getcwd(), help='Directory in which the program will create an "output" directory containing all output files.')
@@ -177,6 +167,10 @@ if __name__ == '__main__':
 
 	args = parser.parse_args()
 
+	class resources(luigi.Config):
+		threads = luigi.IntParameter(args.max_threads)
+
+	resources()
 	# # make sure we're in the correct working directory so relative references work. If not, change to the correct directory
 	# if not os.path.exists(os.path.join(os.getcwd(), 'pipeline_code')):
 	# 	os.chdir('/'.join(sys.argv[0].split('/')[:-1]))
