@@ -56,6 +56,7 @@ class trim(luigi.Task):
 
 	def run(self):
 		cmd = ['trim_galore', '--fastqc', '--fastqc_args "--outdir %s"' % os.path.dirname(self.output()['fastqc'][0].path), '--paired', '-o', os.path.dirname(self.output()['trimgalore'][0].path), '--basename', '%s_%s' % (self.case, self.sample), '--gzip', self.cfg['cases'][self.case][self.sample]['fastq1'], self.cfg['cases'][self.case][self.sample]['fastq2']]
+		pipeline_utils.confirm_path(self.output()['trimgalore'][0].path)
 		pipeline_utils.confirm_path(self.output()['fastqc'][0].path)
 		pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
 
