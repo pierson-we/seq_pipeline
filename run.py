@@ -177,15 +177,8 @@ if __name__ == '__main__':
 			new_config.append(section)
 	new_config = '['.join(new_config)
 	new_config += '\n[resources]\nthreads=%s' % args.max_threads
-	with open(os.environ('LUIGI_CONFIG_PATH'), 'w') as f:
+	with open(os.getenv('LUIGI_CONFIG_PATH'), 'w') as f:
 		f.write(new_config)
-
-	# if not '[resources]' in config:
-	# 	with open(os.environ('LUIGI_CONFIG_PATH'), 'a') as f:
-	# 		f.write('\n[resources]')
-	# if not 'threads' in config:
-	# 	with open(os.environ('LUIGI_CONFIG_PATH'), 'a') as f:
-	# 		f.write('\nthreads=%s' % args.max_threads)
 
 	run_pipeline(args)
 
