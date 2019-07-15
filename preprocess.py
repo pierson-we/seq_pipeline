@@ -3,7 +3,6 @@ import luigi
 import os
 import sys
 import pipeline_utils
-import run
 
 class samtools_index(luigi.Task):
 	priority = 100
@@ -56,7 +55,6 @@ class trim(luigi.Task):
 		return {'trimgalore': [luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'preprocess', '%s_%s_R%s_val_%s.fq.gz' % (self.case, self.sample, n, n))) for n in [1,2]], 'fastqc': [luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'qc', '%s_%s_R%s_val_%s_fastqc.zip' % (self.case, self.sample, n, n))) for n in [1,2]], 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_%s_trim_err.txt' % (self.case, self.sample)))} #TODO - figure out fastqc output filenames
 
 	def run(self):
-		print(run.resources().threads)
 		cmd = ['trim_galore', '--fastqc', '--fastqc_args "--outdir %s"' % os.path.dirname(self.output()['fastqc'][0].path), '--paired', '-o', os.path.dirname(self.output()['trimgalore'][0].path), '--basename', '%s_%s' % (self.case, self.sample), '--gzip', self.cfg['cases'][self.case][self.sample]['fastq1'], self.cfg['cases'][self.case][self.sample]['fastq2']]
 		pipeline_utils.confirm_path(self.output()['trimgalore'][0].path)
 		pipeline_utils.confirm_path(self.output()['fastqc'][0].path)
