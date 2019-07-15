@@ -169,7 +169,7 @@ if __name__ == '__main__':
 	# with open(os.getenv('LUIGI_CONFIG_PATH'), 'a') as f:
 	# 	f.write('\n[resources]\nthreads=%s' % args.max_threads)
 	
-	with open(os.environ('LUIGI_CONFIG_PATH'), 'r') as f:
+	with open(os.getenv('LUIGI_CONFIG_PATH'), 'r') as f:
 		config = f.read().split('[')
 	new_config = []
 	for section in config:
