@@ -38,7 +38,7 @@ def run_pipeline(args):
 	worker_scheduler_factory = luigi.interface._WorkerSchedulerFactory()
 
 	class resources(luigi.Config):
-		threads = parameter.Parameter(
+		threads = luigi.parameter.Parameter(
         default=args.max_threads,
         description='total number of threads available for use by the pipeline',
         config_path=dict(section='resources', name='threads'),)
