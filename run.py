@@ -166,8 +166,20 @@ if __name__ == '__main__':
 
 	args = parser.parse_args()
 
-	with open(os.environ('LUIGI_CONFIG_PATH'), 'a') as f:
-		f.write('\n[resources]\nthreads=%s' % args.max_threads)
+	# with open(os.getenv('LUIGI_CONFIG_PATH'), 'a') as f:
+	# 	f.write('\n[resources]\nthreads=%s' % args.max_threads)
+	
+	with open(os.environ('LUIGI_CONFIG_PATH'), 'r') as f:
+		config = f.read().split('[')
+	new_config = []
+	for section in config:
+		if not section.startswith('resources]'):
+			new_config.append(section)
+	new_config = '['.join(new_config)
+	new_config += '\n[resources]\nthreads=%s' % args.max_threads
+	with open(os.environ('LUIGI_CONFIG_PATH'), 'w') as f:
+		f.write(new_config)
+
 	# if not '[resources]' in config:
 	# 	with open(os.environ('LUIGI_CONFIG_PATH'), 'a') as f:
 	# 		f.write('\n[resources]')
@@ -175,8 +187,8 @@ if __name__ == '__main__':
 	# 	with open(os.environ('LUIGI_CONFIG_PATH'), 'a') as f:
 	# 		f.write('\nthreads=%s' % args.max_threads)
 
-
 	run_pipeline(args)
+
 	# luigi.build([bam_processing.cases(max_threads=args.max_threads, project_dir=args.project_dir, sample_dir=args.sample_dir, threads_per_sample=args.threads_per_sample, timestamp=timestamp)], workers=args.workers, local_scheduler=args.local_scheduler)
 
 	# luigi.build([bowtie(fastq_path=fastq_path, sam_path=sam_path, threads=threads, fasta_path=fasta_path), convert_bam(sam_path=sam_path, bam_path=bam_path)], workers=1, local_scheduler=False)
