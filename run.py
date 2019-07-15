@@ -173,9 +173,9 @@ if __name__ == '__main__':
 		if not section.startswith('resources]'):
 			new_config.append(section)
 	new_config = '['.join(new_config)
-	while not new_coinfig.endswith('\n\n'):
+	while not new_config.endswith('\n\n'):
 		new_config += '\n'
-	new_config += '[resources]\nthreads=%s' % args.max_threads
+	new_config += '[resources]\nthreads=%s' % str(args.max_threads + 1)
 	with open(os.getenv('LUIGI_CONFIG_PATH'), 'w') as f:
 		f.write(new_config)
 
