@@ -171,7 +171,8 @@ if __name__ == '__main__':
 	args = parser.parse_args()
 
 	class resources(luigi.Config):
-	    threads = luigi.IntParameter(default=args.max_threads)
+		threads = luigi.IntParameter(default=args.max_threads)
+	print(dir(resources))
 
 	# # make sure we're in the correct working directory so relative references work. If not, change to the correct directory
 	# if not os.path.exists(os.path.join(os.getcwd(), 'pipeline_code')):
