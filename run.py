@@ -170,40 +170,7 @@ if __name__ == '__main__':
 	class resources(luigi.Config):
 		threads = luigi.IntParameter(args.max_threads)
 
-	resources()
-	# # make sure we're in the correct working directory so relative references work. If not, change to the correct directory
-	# if not os.path.exists(os.path.join(os.getcwd(), 'pipeline_code')):
-	# 	os.chdir('/'.join(sys.argv[0].split('/')[:-1]))
-	# 	# sys.path.append(os.getcwd())
-	# if not os.path.exists(os.path.join(os.getcwd(), 'pipeline_code')):
-	# 	raise ValueError('you must run script from "wes_pipe" directory, as relative references are used throughout the analysis.')
-
-	# import luigi
-	# sample_csv = sys.argv[1]
-	# sample_df = pd.read_csv(sample_csv, header=True, index_col='sample_id')
-	# sample_dict = {}
-
-	# for sample in sample_df.index.tolist():
-	# 	case = sample_df.iloc[sample]['case']
-	# 	if case not in sample_dict:
-	# 		sample_dict[case] = {'T':'', 'N':''}
-	# 	sample_type = sample_df.iloc[sample]['type']
-	# 	sample_dict[case][sample_type] = sample_df.iloc[sample]['file']
-
-	# sample_dict = {'ERR031838_1': {'T': '/Users/wep/Documents/Research/Rare_Tumors/pipeline/test_data/ERR031838_1.fastq.gz', 'N': ''}}
-	# for case in sample_dict:
-	# 	tumor = sample_dict[case]['T']
-	# 	matched_n = sample_dict[case]['N']
-	# 	luigi.build([variant_calls(case=case, tumor=tumor, matched_n=matched_n)], workers=1, local_scheduler=False)
-
-	# project_dir = sys.argv[1]
-	# sample_dir = sys.argv[2]
-	# if not args.local_scheduler:
-		# print('about to start luigi server...')
-		# subprocess.call('python3 /home/wpierson/luigi/src/luigi/bin/luigid --background --pidfile /home/wpierson/projects/wes_pipe/luigi_pidfile.txt --logdir /home/wpierson/projects/wes_pipe --state-path /home/wpierson/projects/wes_pipe/luigi_statepath.txt --port %s &' % args.port)
-		# print('Starting luigi server...\n\n')
-		# sys.stdout.flush()
-		# time.sleep(2)
+	print(resources().threads)
 
 	run_pipeline(args)
 	# luigi.build([bam_processing.cases(max_threads=args.max_threads, project_dir=args.project_dir, sample_dir=args.sample_dir, threads_per_sample=args.threads_per_sample, timestamp=timestamp)], workers=args.workers, local_scheduler=args.local_scheduler)
