@@ -25,7 +25,7 @@ def command_call(cmd, err_log=False):
 	start = time.time()
 	cmd = [str(x) for x in cmd]
 	sys.stdout.flush()
-	print('\n\n' + ' '.join(cmd) + '\n\n')
+	print('\n' + ' '.join(cmd))
 	if not err_log:
 		p = subprocess.Popen(' '.join(cmd), shell=True)
 		p.communicate()
@@ -35,12 +35,12 @@ def command_call(cmd, err_log=False):
 			with open(err_log, 'wb') as log:
 				log.write(proc.stderr.read())
 	end = time.time()
-	print('Command completed in %s minutes' round((end-start)/60, 2))
+	print('Command completed in %s minutes\n' round((end-start)/60, 2))
 	
 def piped_command_call(cmds, err_log, output_file=False):
 	start = time.time()
 	cmds = [[str(x) for x in cmd] for cmd in cmds]
-	print(' '.join(cmds[0]))
+	print('\n' + ' '.join(cmds[0]))
 	processes = [subprocess.Popen(' '.join(cmds[0]), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)]
 	for i, cmd in enumerate(cmds[1:-1]):
 		print(' '.join(cmd))
@@ -61,7 +61,7 @@ def piped_command_call(cmds, err_log, output_file=False):
 		f.write(processes[-1].communicate()[1])
 
 	end = time.time()
-	print('Command completed in %s minutes' round((end-start)/60, 2))
+	print('Command completed in %s minutes\n' round((end-start)/60, 2))
 
 def assign_rg(fastq1, fastq2, case, sample, cfg):
 	import gzip
