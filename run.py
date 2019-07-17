@@ -7,6 +7,7 @@ import luigi
 # from code import pipeline_utils, global_vars
 import pipeline_utils
 import preprocess
+import snv_indel
 
 def run_pipeline(args):
 	# import variant_analysis
@@ -133,9 +134,7 @@ class cases(luigi.Task):
 
 		executions = []
 		for case in self.sample_dict:
-			executions.append(preprocess.apply_bqsr(cfg=cfg, case=case, sample='T'))
-			if 'N' in self.sample_dict[case]:
-				executions.append(preprocess.apply_bqsr(cfg=cfg, case=case, sample='N'))
+			executions.append(snv_idel.variant_calling(cfg=cfg, case=case))
 
 		return executions
 

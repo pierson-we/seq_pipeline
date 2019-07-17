@@ -234,3 +234,18 @@ class apply_bqsr(luigi.Task):
 	def run(self):
 		cmd = ['java', '-jar', '$GATK3', '-T', 'PrintReads', '-I', self.input()['indel_realigner']['indel_realigner'][self.case][self.sample].path, '-R', self.cfg['fasta_file'], '-BQSR', self.input()['base_recalibrator']['base_recalibrator'].path, '-o', self.output()['apply_bqsr'].path]
 		pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
+
+class preprocess(luigi.Task):
+	priority = 90
+	resources = {'threads': 1}
+	cfg = luigi.DictParameter()
+
+	case = luigi.Parameter()
+	sample = luigi.Parameter()
+
+	def requires(self):
+		return {'apply_bqsr': apply_bqsr(case=self.case, sample=self.sample, cfg=self.cfg)}
+
+	def output(self):
+		return self.input()
+
