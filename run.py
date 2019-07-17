@@ -50,8 +50,10 @@ class cases(luigi.Task):
 	fasta_file = luigi.Parameter()
 	dbsnp_indels = luigi.Parameter()
 	dbsnp_all = luigi.Parameter()
+	gnomad = luigi.Parameter()
 	platform = luigi.Parameter()
 	library = luigi.Parameter()
+	library_bed = luigi.Parameter()
 	# library_bed = luigi.Parameter()
 	# gatk4_location = luigi.Parameter()
 	# gatk3_location = luigi.Parameter()
@@ -93,8 +95,10 @@ class cases(luigi.Task):
 			'max_threads': self.sample_threads,
 			'dbsnp_indels': self.dbsnp_indels,
 			'dbsnp_all': self.dbsnp_all,
+			'gnomad': self.gnomad,
 			'platform': self.platform,
 			'library': self.library,
+			'library_bed': self.library_bed,
 			# 'library_bed': self.library_bed,
 			# 'gatk4_location': self.gatk4_location,
 			# 'gatk3_location': self.gatk3_location,
