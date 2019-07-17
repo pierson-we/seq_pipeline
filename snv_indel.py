@@ -62,9 +62,9 @@ class mutect2(luigi.Task):
 
 	def requires(self):
 		requirements = {'mutect2_pon': mutect2_pon(cfg=self.cfg)}
-		requirements['T'] = {'preprocess': preprocess.preprocess(case=self.case, sample=self.'T', cfg=self.cfg)}
+		requirements['T'] = {'preprocess': preprocess.preprocess(case=self.case, sample='T', cfg=self.cfg)}
 		if 'N' in self.cfg['cases'][self.case]:
-			requirements['N'] = {'preprocess': preprocess.preprocess(case=self.case, sample=self.'N', cfg=self.cfg)}
+			requirements['N'] = {'preprocess': preprocess.preprocess(case=self.case, sample='N', cfg=self.cfg)}
 		return requirements
 
 	def output(self):
@@ -87,9 +87,9 @@ class lofreq(luigi.Task):
 		return {'threads': self.cfg['max_threads']}
 
 	def requires(self):
-		requirements = {'T': {'preprocess': preprocess.preprocess(case=self.case, sample=self.'T', cfg=self.cfg)}}
+		requirements = {'T': {'preprocess': preprocess.preprocess(case=self.case, sample='T', cfg=self.cfg)}}
 		if 'N' in self.cfg['cases'][self.case]:
-			requirements['N'] = {'preprocess': preprocess.preprocess(case=self.case, sample=self.'N', cfg=self.cfg)}
+			requirements['N'] = {'preprocess': preprocess.preprocess(case=self.case, sample='N', cfg=self.cfg)}
 		return requirements
 
 	def output(self):
@@ -118,7 +118,7 @@ class manta(luigi.Task):
 		return {'threads': self.cfg['max_threads']}
 
 	def requires(self):
-		return {'T': {'preprocess': preprocess.preprocess(case=self.case, sample=self.'T', cfg=self.cfg)}, 'N': {'preprocess': preprocess.preprocess(case=self.case, sample=self.'N', cfg=self.cfg)}}
+		return {'T': {'preprocess': preprocess.preprocess(case=self.case, sample='T', cfg=self.cfg)}, 'N': {'preprocess': preprocess.preprocess(case=self.case, sample='N', cfg=self.cfg)}}
 
 	def output(self):
 		return {'manta': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variant_prep', 'manta', 'results', 'variants', 'candidateSmallIndels.vcf.gz')), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_manta_err.txt' % self.case))}
@@ -140,7 +140,7 @@ class strelka(luigi.Task):
 		return {'threads': self.cfg['max_threads']}
 
 	def requires(self):
-		return {'manta': manta(case=self.case, cfg=self.cfg), 'T': {'preprocess': preprocess.preprocess(case=self.case, sample=self.'T', cfg=self.cfg)}, 'N': {'preprocess': preprocess.preprocess(case=self.case, sample=self.'N', cfg=self.cfg)}}
+		return {'manta': manta(case=self.case, cfg=self.cfg), 'T': {'preprocess': preprocess.preprocess(case=self.case, sample='T', cfg=self.cfg)}, 'N': {'preprocess': preprocess.preprocess(case=self.case, sample='N', cfg=self.cfg)}}
 
 	def output(self):
 		return {'strelka': [luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variant_prep', 'strelka', 'results', 'variants', 'somatic.%s.vcf.gz' % variant_type)) for variant_type in ['snvs', 'indels']], 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_manta_err.txt' % self.case))}
@@ -162,9 +162,9 @@ class scalpel_discovery(luigi.Task):
 		return {'threads': self.cfg['max_threads']}
 
 	def requires(self):
-		requirements = {'T': {'preprocess': preprocess.preprocess(case=self.case, sample=self.'T', cfg=self.cfg)}}
+		requirements = {'T': {'preprocess': preprocess.preprocess(case=self.case, sample='T', cfg=self.cfg)}}
 		if 'N' in self.cfg['cases'][self.case]:
-			requirements['N'] = {'preprocess': preprocess.preprocess(case=self.case, sample=self.'N', cfg=self.cfg)}
+			requirements['N'] = {'preprocess': preprocess.preprocess(case=self.case, sample='N', cfg=self.cfg)}
 		return requirements
 
 	def output(self):
