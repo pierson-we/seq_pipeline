@@ -247,5 +247,5 @@ class preprocess(luigi.Task):
 		return {'apply_bqsr': apply_bqsr(case=self.case, sample=self.sample, cfg=self.cfg)}
 
 	def output(self):
-		return self.input()
+		return {'bam': self.input()['apply_bqsr']['apply_bqsr']}
 
