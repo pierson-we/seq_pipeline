@@ -195,9 +195,9 @@ class scalpel_export(luigi.Task):
 	def output(self):
 		outputs = {'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_lofreq_err.txt' % self.case))}
 		if 'N' in self.cfg['cases'][self.case]:
-			outputs['scalpel_export'] = luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variant_prep', '%s_.single.indel.vcf' % (self.case, variant_type)))
+			outputs['scalpel_export'] = luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variant_prep', 'twopass', 'somatic.indel.vcf'))
 		else:
-			outputs['scalpel_export'] = luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variant_prep', '%s_somatic.indel.vcf' % self.case))
+			outputs['scalpel_export'] = luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variant_prep', 'single.indel.vcf'))
 		return outputs
 
 	def run(self):
