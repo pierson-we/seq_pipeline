@@ -134,7 +134,7 @@ class cases(luigi.Task):
 
 		executions = []
 		for case in self.sample_dict:
-			executions.append(snv_idel.variant_calling(cfg=cfg, case=case))
+			executions.append(snv_indel.variant_calling(cfg=cfg, case=case))
 
 		return executions
 
