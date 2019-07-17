@@ -22,6 +22,7 @@ def confirm_path(file):
 				raise
 
 def command_call(cmd, err_log=False):
+	start = time.time()
 	cmd = [str(x) for x in cmd]
 	sys.stdout.flush()
 	print('\n\n' + ' '.join(cmd) + '\n\n')
@@ -33,8 +34,11 @@ def command_call(cmd, err_log=False):
 		with subprocess.Popen(' '.join(cmd), shell=True, stderr=subprocess.PIPE) as proc:
 			with open(err_log, 'wb') as log:
 				log.write(proc.stderr.read())
+	end = time.time()
+	print('Command completed in %s minutes' round((end-start)/60, 2))
 	
 def piped_command_call(cmds, err_log, output_file=False):
+	start = time.time()
 	cmds = [[str(x) for x in cmd] for cmd in cmds]
 	print(' '.join(cmds[0]))
 	processes = [subprocess.Popen(' '.join(cmds[0]), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)]
@@ -55,6 +59,9 @@ def piped_command_call(cmds, err_log, output_file=False):
 	
 	with open(err_log, 'wb') as f:
 		f.write(processes[-1].communicate()[1])
+
+	end = time.time()
+	print('Command completed in %s minutes' round((end-start)/60, 2))
 
 def assign_rg(fastq1, fastq2, case, sample, cfg):
 	import gzip
