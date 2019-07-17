@@ -174,7 +174,7 @@ if __name__ == '__main__':
 	new_config = '['.join(new_config)
 	while not new_config.endswith('\n\n'):
 		new_config += '\n'
-	new_config += '[resources]\nthreads=%s' % str(args.max_threads + 1)
+	new_config += '[resources]\nthreads=%s' % str(args.max_threads)
 	with open(os.getenv('LUIGI_CONFIG_PATH'), 'w') as f:
 		f.write(new_config)
 
