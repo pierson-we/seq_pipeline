@@ -35,7 +35,7 @@ def command_call(cmd, err_log=False):
 			with open(err_log, 'wb') as log:
 				log.write(proc.stderr.read())
 	end = time.time()
-	print('Command completed in %s minutes\n' round((end-start)/60, 2))
+	print('Command completed in %s minutes\n' % round((end-start)/60, 2))
 	
 def piped_command_call(cmds, err_log, output_file=False):
 	start = time.time()
@@ -61,7 +61,7 @@ def piped_command_call(cmds, err_log, output_file=False):
 		f.write(processes[-1].communicate()[1])
 
 	end = time.time()
-	print('Command completed in %s minutes\n' round((end-start)/60, 2))
+	print('Command completed in %s minutes\n' % round((end-start)/60, 2))
 
 def assign_rg(fastq1, fastq2, case, sample, cfg):
 	import gzip
