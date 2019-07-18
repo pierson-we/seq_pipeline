@@ -26,7 +26,7 @@ def run_pipeline(args):
 					for lane in os.listdir(os.path.join(args.sample_dir, sample, sample_type)):
 						if os.path.isdir(os.path.join(args.sample_dir, sample, sample_type, lane)):
 							sample_dict[sample][sample_type_dict[sample_type]][lane] = {}
-							fastq_list = [filename for filename in os.path.join(args.sample_dir, sample, sample_type, lane) if 'fastq' in filename]
+							fastq_list = [filename for filename in os.listdir(os.path.join(args.sample_dir, sample, sample_type, lane)) if 'fastq' in filename]
 							print(sample)
 							print(fastq_list)
 							if len(fastq_list) > 2:
