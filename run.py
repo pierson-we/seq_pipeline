@@ -27,6 +27,8 @@ def run_pipeline(args):
 						if os.path.isdir(os.path.join(args.sample_dir, sample, sample_type, lane)):
 							sample_dict[sample][sample_type_dict[sample_type]][lane] = {}
 							fastq_list = [filename for filename in os.path.join(args.sample_dir, sample, sample_type, lane) if 'fastq' in filename]
+							print(sample)
+							print(fastq_list)
 							if len(fastq_list) > 2:
 								raise Exception('More than 2 fastq files present for Sample %s_%s Lane %s' %(sample, sample_type_dict[sample_type]), lane)
 							sample_dict[sample][sample_type_dict[sample_type]][lane]['fastq1'] = os.path.join(args.sample_dir, sample, sample_type, lane, fastq_list[0])
