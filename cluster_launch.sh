@@ -17,4 +17,4 @@ module load CBC
 module load python
 module load udocker
 
-udocker run --novol=/etc/host.conf -v /data/wpierson/seq_pipeline/resources:/root/pipeline/resources -v /data/wpierson/seq_pipeline/code:/root/pipeline/code -v ${INPUT_DIR}:/root/input -v ${OUTPUT_DIR}/output:/root/output -v /home/wpierson/projects/seq_pipeline:/root/seq_pipeline seq_pipeline /root/seq_pipeline/test_launch.sh -I /root/input -O /root -t $THREADS -s $SAMPLE_THREADS -w $WORKERS $LOCAL_SCHEDULER 
+udocker run --novol=/etc/host.conf --novol=/etc/resolv.conf -v /data/wpierson/seq_pipeline/resources:/root/pipeline/resources -v /data/wpierson/seq_pipeline/code:/root/pipeline/code -v ${INPUT_DIR}:/root/input -v ${OUTPUT_DIR}/output:/root/output -v /home/wpierson/projects/seq_pipeline:/root/seq_pipeline seq_pipeline /root/seq_pipeline/test_launch.sh -I /root/input -O /root -t $THREADS -s $SAMPLE_THREADS -w $WORKERS $LOCAL_SCHEDULER 
