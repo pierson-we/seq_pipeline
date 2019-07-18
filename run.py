@@ -16,19 +16,23 @@ def run_pipeline(args):
 	
 	# timestamp = str(int(time.time()))
 	sample_dict = {}
-
+	sample_type_dict = {'normal': 'N', 'tumor': 'T'}
 	for sample in os.listdir(args.sample_dir):
 		if os.path.isdir(os.path.join(args.sample_dir, sample)):
-			sample_dict[sample] = {'T': {}}
-			tumor_list = [filename for filename in os.listdir(os.path.join(args.sample_dir, sample, 'tumor')) if 'fastq' in filename]
-			sample_dict[sample]['T']['fastq1'] = os.path.join(args.sample_dir, sample, 'tumor', tumor_list[0])
-			sample_dict[sample]['T']['fastq2'] = os.path.join(args.sample_dir, sample, 'tumor', tumor_list[1])
-			if os.path.exists(os.path.join(args.sample_dir, sample, 'normal')):
-				if len(os.listdir(os.path.join(args.sample_dir, sample, 'normal'))) > 0:
-					sample_dict[sample]['N'] = {}
-					normal_list = [filename for filename in os.listdir(os.path.join(args.sample_dir, sample, 'normal')) if 'fastq' in filename]
-					sample_dict[sample]['N']['fastq1'] = os.path.join(args.sample_dir, sample, 'normal', normal_list[0])
-					sample_dict[sample]['N']['fastq2'] = os.path.join(args.sample_dir, sample, 'normal', normal_list[1])
+			sample_dict[sample] = {}
+			for sample_type in ['normal', 'tumor']:
+				if os.path.exists(os.path.join(args.sample_dir, sample, sample_type)):
+					sample_dict[sample][sample_type_dict[sample_type]] = {}
+					for lane in os.listdir(os.path.join(args.sample_dir, sample, sample_type)):
+						if os.path.isdir(os.path.join(args.sample_dir, sample, sample_type, lane)):
+							sample_dict[sample][sample_type_dict[sample_type]][lane] = {}
+								fastq_list = [filename for filename in os.path.join(args.sample_dir, sample, sample_type, lane) if 'fastq' in filename]
+								if len(fastq_list) > 2:
+									raise Exception('More than 2 fastq files present for Sample %s_%s Lane %s' %(sample, sample_type_dict[sample_type]), lane)
+								sample_dict[sample][sample_type_dict[sample_type]][lane]['fastq1'] = os.path.join(args.sample_dir, sample, sample_type, lane, fastq_list[0])
+								sample_dict[sample][sample_type_dict[sample_type]][lane]['fastq2'] = os.path.join(args.sample_dir, sample, sample_type, lane, fastq_list[1])
+	print(sample_dict)
+	sys.exit()
 	if args.threads_per_sample:
 		sample_threads = args.threads_per_sample
 	else:
