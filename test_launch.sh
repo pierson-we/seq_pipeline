@@ -7,7 +7,6 @@ echo "nameserver 64.54.144.10" >> /etc/resolv.conf
 echo "nameserver 128.218.224.175" >> /etc/resolv.conf
 . /root/.profile
 cd /root
-ln /usr/bin/python3.6 /usr/bin/python
 alias python=/usr/bin/python3.6
 alias python3=/usr/bin/python3.6
 export LUIGI_CONFIG_PATH=/root/seq_pipeline/luigi.cfg && python3.6 ./seq_pipeline/run.py "$@"
