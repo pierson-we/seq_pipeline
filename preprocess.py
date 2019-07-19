@@ -2,6 +2,7 @@ import subprocess
 import luigi
 import os
 import sys
+import shutil
 import pipeline_utils
 
 class samtools_index(luigi.Task):
