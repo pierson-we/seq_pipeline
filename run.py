@@ -50,8 +50,8 @@ class cases(luigi.Task):
 
 	# cfg parameters
 	fasta_file = luigi.Parameter()
-	dbsnp_indels = luigi.Parameter()
-	dbsnp_all = luigi.Parameter()
+	germline_indels = luigi.Parameter()
+	germline_all = luigi.Parameter()
 	gnomad = luigi.Parameter()
 	platform = luigi.Parameter()
 	library = luigi.Parameter()
@@ -95,8 +95,8 @@ class cases(luigi.Task):
 			'cases': self.sample_dict,
 			'output_dir': os.path.join(self.project_dir, 'output'),
 			'max_threads': self.sample_threads,
-			'dbsnp_indels': self.dbsnp_indels,
-			'dbsnp_all': self.dbsnp_all,
+			'germline_indels': self.germline_indels,
+			'germline_all': self.germline_all,
 			'gnomad': self.gnomad,
 			'platform': self.platform,
 			'library': self.library,

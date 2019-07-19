@@ -102,9 +102,9 @@ class lofreq(luigi.Task):
 
 	def run(self):
 		if 'N' in self.cfg['cases'][self.case]:
-			cmd = ['lofreq', 'call-parallel', '-f', self.cfg['fasta_file'], '--call-indels', '--threads', self.cfg['max_threads'], '-l', self.cfg['library_bed'], '-d', self.cfg['dbsnp_all'], '-o', self.output()['lofreq'][0].path.split('somatic_final_minus-dbsnp')[0], '-n', self.input()['N']['preprocess']['bam'].path, '-t', self.input()['T']['preprocess']['bam'].path]
+			cmd = ['lofreq', 'call-parallel', '-f', self.cfg['fasta_file'], '--call-indels', '--threads', self.cfg['max_threads'], '-l', self.cfg['library_bed'], '-d', self.cfg['germline_all'], '-o', self.output()['lofreq'][0].path.split('somatic_final_minus-dbsnp')[0], '-n', self.input()['N']['preprocess']['bam'].path, '-t', self.input()['T']['preprocess']['bam'].path]
 		else:
-			cmd = ['lofreq', 'somatic', '-f', self.cfg['fasta_file'], '--call-indels', '--pp-threads', self.cfg['max_threads'], '-l', self.cfg['library_bed'], '-s', '-S', self.cfg['dbsnp_all'], '-o', self.output()['lofreq'][0].path, self.input()['T']['preprocess']['bam'].path]
+			cmd = ['lofreq', 'somatic', '-f', self.cfg['fasta_file'], '--call-indels', '--pp-threads', self.cfg['max_threads'], '-l', self.cfg['library_bed'], '-s', '-S', self.cfg['germline_all'], '-o', self.output()['lofreq'][0].path, self.input()['T']['preprocess']['bam'].path]
 		pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
 
 class manta(luigi.Task):
