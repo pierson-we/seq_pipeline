@@ -141,7 +141,11 @@ class manta(luigi.Task):
 		return {'T': {'preprocess': preprocess.preprocess(case=self.case, sample='T', cfg=self.cfg)}, 'N': {'preprocess': preprocess.preprocess(case=self.case, sample='N', cfg=self.cfg)}}
 
 	def output(self):
-		return {'manta': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variant_prep', 'manta', 'results', 'variants', 'candidateSmallIndels.vcf.gz')), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_manta_err.txt' % self.case))}
+		outputs = {'manta': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variant_prep', 'manta', 'results', 'variants', 'candidateSmallIndels.vcf.gz')), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_manta_err.txt' % self.case))}
+		for task in outputs:
+			if isinstance(outputs[task], luigi.LocalTarget):
+				pipeline_utils.confirm_path(outputs[task].path)
+		return outputs
 
 	def run(self):
 		cmd = ['$MANTA/bin/configManta.py', '--exome', '--referenceFasta', self.cfg['fasta_file'], '--normalBam', self.input()['N']['preprocess']['bam'].path, '--tumorBam', self.input()['T']['preprocess']['bam'].path, '--rundir', os.path.join(self.cfg['output_dir'], self.case, 'variant_prep', 'manta')] # TODO add logic for exome to handle multiple sequencing preps
