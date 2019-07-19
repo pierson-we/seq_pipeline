@@ -167,7 +167,11 @@ class strelka(luigi.Task):
 		return {'manta': manta(case=self.case, cfg=self.cfg), 'T': {'preprocess': preprocess.preprocess(case=self.case, sample='T', cfg=self.cfg)}, 'N': {'preprocess': preprocess.preprocess(case=self.case, sample='N', cfg=self.cfg)}}
 
 	def output(self):
-		return {'strelka': [luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variant_prep', 'strelka', 'results', 'variants', 'somatic.%s.vcf.gz' % variant_type)) for variant_type in ['snvs', 'indels']], 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_manta_err.txt' % self.case))}
+		outputs = {'strelka': [luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variant_prep', 'strelka', 'results', 'variants', 'somatic.%s.vcf.gz' % variant_type)) for variant_type in ['snvs', 'indels']], 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_manta_err.txt' % self.case))}
+		for task in outputs:
+			if isinstance(outputs[task], luigi.LocalTarget):
+				pipeline_utils.confirm_path(outputs[task].path)
+		return outputs
 
 	def run(self):
 		cmd = ['$STRELKA/bin/configureStrelkaSomaticWorkflow.py', '--exome', '--referenceFasta', self.cfg['fasta_file'], '--normalBam', self.input()['N']['preprocess']['bam'].path, '--tumorBam', self.input()['T']['preprocess']['bam'].path, '--indelCandidates', self.input()['manta']['manta'].path, '--rundir', os.path.join(self.cfg['output_dir'], self.case, 'variant_prep', 'strelka')]
@@ -197,6 +201,9 @@ class scalpel_discovery(luigi.Task):
 			outputs['scalpel_discovery'] = luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variant_prep', 'twopass', 'database.db'))
 		else:
 			outputs['scalpel_discovery'] = luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variant_prep', 'database.db'))
+		for task in outputs:
+			if isinstance(outputs[task], luigi.LocalTarget):
+				pipeline_utils.confirm_path(outputs[task].path)
 		return outputs
 
 	def run(self):
@@ -222,6 +229,9 @@ class scalpel_export(luigi.Task):
 			outputs['scalpel_export'] = luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variant_prep', 'twopass', 'somatic.indel.vcf'))
 		else:
 			outputs['scalpel_export'] = luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variant_prep', 'single.indel.vcf'))
+		for task in outputs:
+			if isinstance(outputs[task], luigi.LocalTarget):
+				pipeline_utils.confirm_path(outputs[task].path)
 		return outputs
 
 	def run(self):
