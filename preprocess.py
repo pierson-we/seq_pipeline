@@ -95,7 +95,6 @@ class merge_bams(luigi.Task):
 	def requires(self):
 		requirements = {}
 		for lane in self.cfg['cases'][self.case][self.sample]:
-			print(lane)
 			requirements[lane] = {'align': align(case=self.case, sample=self.sample, lane=lane, cfg=self.cfg)}
 		return requirements
 
