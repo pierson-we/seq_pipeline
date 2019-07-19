@@ -74,7 +74,7 @@ class align(luigi.Task):
 		return {'threads': self.cfg['max_threads']}
 
 	def requires(self):
-		return {'trim': trim(case=self.case, sample=self.sample, lane=lane, cfg=self.cfg), 'index': bwa_index(cfg=self.cfg)}
+		return {'trim': trim(case=self.case, sample=self.sample, lane=self.lane, cfg=self.cfg), 'index': bwa_index(cfg=self.cfg)}
 
 	def output(self):
 		return {'bwa_mem': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'preprocess', '%s_%s_%s_raw.bam' % (self.case, self.sample, self.lane))), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_%s_%s_bwa_mem_err.txt' % (self.case, self.sample, self.lane)))}
@@ -102,10 +102,14 @@ class merge_bams(luigi.Task):
 		return {'merge_bams': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'preprocess', '%s_%s_merged.bam' % (self.case, self.sample))), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_%s_merge_bams_err.txt' % (self.case, self.sample)))}
 
 	def run(self):
-		cmd = ['java', '-jar', '$PICARD', 'MergeSamFiles', 'O=%s' % self.output()['merge_bams'].path]
-		for lane in self.input():
-			cmd += ['I=%s' % self.input()[lane]['align']['bwa_mem'].path]
-		pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
+		if len(self.input()) > 1:
+			cmd = ['java', '-jar', '$PICARD', 'MergeSamFiles', 'O=%s' % self.output()['merge_bams'].path]
+			for lane in self.input():
+				cmd += ['I=%s' % self.input()[lane]['align']['bwa_mem'].path]
+			pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
+		else:
+			for lane in self.input():
+				shutil.move(self.input()[lane]['align']['bwa_mem'].path, self.output()['merge_bams'].path)
 
 
 class mark_duplicates(luigi.Task):
