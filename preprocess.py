@@ -50,17 +50,41 @@ class trim(luigi.Task):
 
 	case = luigi.Parameter()
 	sample = luigi.Parameter()
+	lane = luigi.Parameter()
 
 	def output(self):
-		return {'trimgalore': [luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'preprocess', '%s_%s_R%s_val_%s.fq.gz' % (self.case, self.sample, n, n))) for n in [1,2]], 'fastqc': [luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'qc', '%s_%s_R%s_val_%s_fastqc.zip' % (self.case, self.sample, n, n))) for n in [1,2]], 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_%s_trim_err.txt' % (self.case, self.sample)))} #TODO - figure out fastqc output filenames
+		return {'trimgalore': [luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'preprocess', '%s_%s_%s_R%s_val_%s.fq.gz' % (self.case, self.sample, self.lane, n, n))) for n in [1,2]], 'fastqc': [luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'qc', '%s_%s_%s_R%s_val_%s_fastqc.zip' % (self.case, self.sample, self.lane, n, n))) for n in [1,2]], 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_%s_%s_trim_err.txt' % (self.case, self.sample, self.lane)))}
 
 	def run(self):
-		cmd = ['trim_galore', '--fastqc', '--fastqc_args "--outdir %s"' % os.path.dirname(self.output()['fastqc'][0].path), '--paired', '-o', os.path.dirname(self.output()['trimgalore'][0].path), '--basename', '%s_%s' % (self.case, self.sample), '--gzip', self.cfg['cases'][self.case][self.sample]['fastq1'], self.cfg['cases'][self.case][self.sample]['fastq2']]
+		cmd = ['trim_galore', '--fastqc', '--fastqc_args "--outdir %s"' % os.path.dirname(self.output()['fastqc'][0].path), '--paired', '-o', os.path.dirname(self.output()['trimgalore'][0].path), '--basename', '%s_%s_%s' % (self.case, self.sample, self.lane), '--gzip', self.cfg['cases'][self.case][self.sample][self.lane]['fastq1'], self.cfg['cases'][self.case][self.sample][self.lane]['fastq2']]
 		pipeline_utils.confirm_path(self.output()['trimgalore'][0].path)
 		pipeline_utils.confirm_path(self.output()['fastqc'][0].path)
 		pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
 
 class align(luigi.Task):
+	priority = 100
+	cfg = luigi.DictParameter()
+
+	case = luigi.Parameter()
+	sample = luigi.Parameter()
+	lane = luigi.Parameter()
+
+	@property # This is necessary to assign a dynamic value to the 'threads' resource within a task
+	def resources(self):
+		return {'threads': self.cfg['max_threads']}
+
+	def requires(self):
+		return {'trim': trim(case=self.case, sample=self.sample, lane=lane, cfg=self.cfg), 'index': bwa_index(cfg=self.cfg)}
+
+	def output(self):
+		return {'bwa_mem': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'preprocess', '%s_%s_%s_raw.bam' % (self.case, self.sample, self.lane))), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_%s_%s_bwa_mem_err.txt' % (self.case, self.sample, self.lane)))}
+
+	def run(self):
+		read_group = pipeline_utils.assign_rg(self.input()['trim']['trimgalore'][0].path, self.input()['trim']['trimgalore'][1].path, self.case, self.sample, self.cfg)
+		cmds = [['bwa', 'mem', '-M', '-t', self.cfg['max_threads'], '-R', "'%s'" % read_group, self.cfg['fasta_file'], self.input()['trim']['trimgalore'][0].path, self.input()['trim']['trimgalore'][1].path], ['samtools', 'view', '-bh'], ['samtools', 'sort', '-o', self.output()['bwa_mem'].path]]
+		pipeline_utils.piped_command_call(cmds, err_log=self.output()['err_log'].path)
+
+class merge_bams(luigi.Task):
 	priority = 100
 	cfg = luigi.DictParameter()
 
@@ -72,15 +96,20 @@ class align(luigi.Task):
 		return {'threads': self.cfg['max_threads']}
 
 	def requires(self):
-		return {'trim': trim(case=self.case, sample=self.sample, cfg=self.cfg), 'index': bwa_index(cfg=self.cfg)}
+		requirements = {}
+		for lane in self.cfg['cases'][self.case][self.sample]:
+			requirements[lane] = {'align': align(case=self.case, sample=self.sample, lane=lane, cfg=self.cfg)}
+		return requirements
 
 	def output(self):
-		return {'bwa_mem': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'preprocess', '%s_%s_raw.bam' % (self.case, self.sample))), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_%s_bwa_mem_err.txt' % (self.case, self.sample)))}
+		return {'merge_bams': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'preprocess', '%s_%s_merged.bam' % (self.case, self.sample))), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_%s_merge_bams_err.txt' % (self.case, self.sample)))}
 
 	def run(self):
-		read_group = pipeline_utils.assign_rg(self.input()['trim']['trimgalore'][0].path, self.input()['trim']['trimgalore'][1].path, self.case, self.sample, self.cfg)
-		cmds = [['bwa', 'mem', '-M', '-t', self.cfg['max_threads'], '-R', "'%s'" % read_group, self.cfg['fasta_file'], self.input()['trim']['trimgalore'][0].path, self.input()['trim']['trimgalore'][1].path], ['samtools', 'view', '-bh'], ['samtools', 'sort', '-o', self.output()['bwa_mem'].path]]
-		pipeline_utils.piped_command_call(cmds, err_log=self.output()['err_log'].path)
+		cmd = ['java', '-jar', '$PICARD', 'MergeSamFiles', 'O=%s' % self.output()['merge_bams'].path]
+		for lane in self.cfg['cases'][self.case][self.sample]:
+			cmd += ['I=%s' % self.input()[lane]['align']['bwa_mem'].path]
+		pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
+
 
 class mark_duplicates(luigi.Task):
 	priority = 90
@@ -94,13 +123,13 @@ class mark_duplicates(luigi.Task):
 		return {'threads': self.cfg['max_threads']}
 
 	def requires(self):
-		return {'align': align(case=self.case, sample=self.sample, cfg=self.cfg)}
+		return {'merge_bams': merge_bams(case=self.case, sample=self.sample, cfg=self.cfg)}
 
 	def output(self):
 		return {'mark_duplicates': {'bam': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'preprocess', '%s_%s_marked_duplicates.bam' % (self.case, self.sample))), 'metrics': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'preprocess', '%s_%s_marked_dup_metrics.txt' % (self.case, self.sample)))}, 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_%s_mark_duplicates_err.txt' % (self.case, self.sample)))}
 
 	def run(self):
-		cmd = ['java', '-jar', '$PICARD', 'MarkDuplicates', 'I=%s' % self.input()['align']['bwa_mem'].path, 'O=%s' % self.output()['mark_duplicates']['bam'].path, 'M=%s' % self.output()['mark_duplicates']['metrics'].path, 'TAGGING_POLICY=All']
+		cmd = ['java', '-jar', '$PICARD', 'MarkDuplicates', 'I=%s' % self.input()['merge_bams']['merge_bams'].path, 'O=%s' % self.output()['mark_duplicates']['bam'].path, 'M=%s' % self.output()['mark_duplicates']['metrics'].path, 'TAGGING_POLICY=All']
 		pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
 
 class index_bam(luigi.Task):
