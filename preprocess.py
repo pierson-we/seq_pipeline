@@ -86,14 +86,11 @@ class align(luigi.Task):
 
 class merge_bams(luigi.Task):
 	priority = 100
+	resources = {'threads': 1}
 	cfg = luigi.DictParameter()
 
 	case = luigi.Parameter()
 	sample = luigi.Parameter()
-
-	@property # This is necessary to assign a dynamic value to the 'threads' resource within a task
-	def resources(self):
-		return {'threads': self.cfg['max_threads']}
 
 	def requires(self):
 		requirements = {}
@@ -106,7 +103,7 @@ class merge_bams(luigi.Task):
 
 	def run(self):
 		cmd = ['java', '-jar', '$PICARD', 'MergeSamFiles', 'O=%s' % self.output()['merge_bams'].path]
-		for lane in self.cfg['cases'][self.case][self.sample]:
+		for lane in self.input():
 			cmd += ['I=%s' % self.input()[lane]['align']['bwa_mem'].path]
 		pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
 
