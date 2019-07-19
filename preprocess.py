@@ -111,6 +111,8 @@ class merge_bams(luigi.Task):
 		else:
 			for lane in self.input():
 				shutil.move(self.input()[lane]['align']['bwa_mem'].path, self.output()['merge_bams'].path)
+			with open(self.output()['err_log'].path, 'w') as f:
+				f.write('')
 
 
 class mark_duplicates(luigi.Task):
