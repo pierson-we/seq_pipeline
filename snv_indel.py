@@ -23,7 +23,7 @@ class mutect2_normal(luigi.Task):
 		return {'mutect2_normal': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variant_prep', '%s_%s_mutect2_normal.vcf.gz' % (self.case, self.sample))), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_%s_mutect2_normal_err.txt' % (self.case, self.sample)))}
 
 	def run(self):
-		cmd = ['gatk4', 'Mutect2', '-R', self.cfg['fasta_file'], '--native-pair-hmm-threads', self.cfg['max_threads'], '-I', self.input()['preprocess'].path, '-O', self.output()['mutect2_normal'].path]
+		cmd = ['gatk4', 'Mutect2', '-R', self.cfg['fasta_file'], '--native-pair-hmm-threads', self.cfg['max_threads'], '-I', self.input()['preprocess']['bam'].path, '-O', self.output()['mutect2_normal'].path]
 		pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
 
 class mutect2_pon(luigi.Task):
