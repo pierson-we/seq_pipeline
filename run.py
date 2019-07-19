@@ -39,12 +39,13 @@ def run_pipeline(args):
 	worker_scheduler_factory = luigi.interface._WorkerSchedulerFactory()
 	# luigi.interface.core.threads = luigi.parameter.IntParameter(default=args.max_threads, description='total number of threads available for use by the pipeline', config_path=dict(section='resources', name='threads'),)
 
-	luigi.build([cases(sample_dict=sample_dict, project_dir=args.project_dir, sample_threads=sample_threads, cwd=os.getcwd())], workers=args.workers, local_scheduler=args.local_scheduler, worker_scheduler_factory=worker_scheduler_factory) # , workers=args.workers #, scheduler_port=int(args.port)) # workers=sample_threads , resources={'threads': args.max_threads}
+	luigi.build([cases(sample_dict=sample_dict, project_dir=args.project_dir, global_max_threads=args.max_threads, sample_threads=sample_threads, cwd=os.getcwd())], workers=args.workers, local_scheduler=args.local_scheduler, worker_scheduler_factory=worker_scheduler_factory) # , workers=args.workers #, scheduler_port=int(args.port)) # workers=sample_threads , resources={'threads': args.max_threads}
 
 class cases(luigi.Task):
 	# generated parameters
 	sample_dict = luigi.DictParameter()
 	project_dir = luigi.Parameter()
+	global_max_threads = luigi.IntParameter()
 	sample_threads = luigi.IntParameter()
 	cwd = luigi.Parameter()
 
@@ -94,6 +95,7 @@ class cases(luigi.Task):
 			'fasta_file': self.fasta_file,
 			'cases': self.sample_dict,
 			'output_dir': os.path.join(self.project_dir, 'output'),
+			'global_max_threads': self.global_max_threads,
 			'max_threads': self.sample_threads,
 			'germline_indels': self.germline_indels,
 			'germline_all': self.germline_all,

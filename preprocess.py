@@ -163,7 +163,7 @@ class realigner_target(luigi.Task):
 
 	@property # This is necessary to assign a dynamic value to the 'threads' resource within a task
 	def resources(self):
-		return {'threads': self.cfg['max_threads']}
+		return {'threads': self.cfg['global_max_threads']}
 
 	def requires(self):
 		requirements = {}
@@ -179,7 +179,7 @@ class realigner_target(luigi.Task):
 		# return {'realigner_target': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'preprocess', '%s_%s_realigner_targets.intervals' % (self.case, self.sample))), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_%s_realigner_target_err.txt' % (self.case, self.sample)))}
 		return {'realigner_target': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], 'all_samples', 'preprocess', 'all_samples_realigner_targets.intervals')), 'file_map': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], 'all_samples', 'preprocess', 'all_samples_realigner.map')), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], 'all_samples', 'log', 'realigner_target_err.txt'))}
 	def run(self):
-		cmd = ['java', '-jar', '$GATK3', '-T', 'RealignerTargetCreator', '-R', self.cfg['fasta_file'], '--known', self.cfg['germline_indels'], '-nct', self.cfg['max_threads'], '-o', self.output()['realigner_target'].path]
+		cmd = ['java', '-jar', '$GATK3', '-T', 'RealignerTargetCreator', '-R', self.cfg['fasta_file'], '--known', self.cfg['germline_indels'], '-nct', self.cfg['global_max_threads'], '-o', self.output()['realigner_target'].path]
 		file_map = []
 		for case in self.input():
 			for sample in self.input()[case]:
@@ -198,7 +198,7 @@ class indel_realigner(luigi.Task):
 
 	@property # This is necessary to assign a dynamic value to the 'threads' resource within a task
 	def resources(self):
-		return {'threads': self.cfg['max_threads']}
+		return {'threads': self.cfg['global_max_threads']}
 
 	def requires(self):
 		requirements = {'realigner_target': realigner_target(cfg=self.cfg), 'cases': {}}
@@ -221,7 +221,7 @@ class indel_realigner(luigi.Task):
 		return outputs
 
 	def run(self):
-		cmd = ['java', '-jar', '$GATK3', '-T', 'IndelRealigner', '-R', self.cfg['fasta_file'], '--nWayOut', self.input()['realigner_target']['file_map'].path, '-known', self.cfg['germline_indels'], '--consensusDeterminationModel', 'USE_SW', '-nct', self.cfg['max_threads'], '--targetIntervals', self.input()['realigner_target']['realigner_target'].path]
+		cmd = ['java', '-jar', '$GATK3', '-T', 'IndelRealigner', '-R', self.cfg['fasta_file'], '--nWayOut', self.input()['realigner_target']['file_map'].path, '-known', self.cfg['germline_indels'], '--consensusDeterminationModel', 'USE_SW', '-nct', self.cfg['global_max_threads'], '--targetIntervals', self.input()['realigner_target']['realigner_target'].path]
 		for case in self.input()['cases']:
 			for sample in self.input()['cases'][case]:
 				filename = self.input()['cases'][case][sample]['mark_duplicates']['mark_duplicates']['bam'].path
