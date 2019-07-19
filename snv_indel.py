@@ -23,7 +23,7 @@ class mutect2_normal(luigi.Task):
 		outputs =  {'mutect2_normal': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variant_prep', '%s_%s_mutect2_normal.vcf.gz' % (self.case, self.sample))), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_%s_mutect2_normal_err.txt' % (self.case, self.sample)))}
 		for task in outputs:
 			if isinstance(outputs[task], luigi.LocalTarget):
-				outputs[task].mkdir()
+				pipeline_utils.confirm_path(outputs[task].path)
 		return outputs
 
 	def run(self):
@@ -46,7 +46,12 @@ class mutect2_pon(luigi.Task):
 		return requirements
 
 	def output(self):
-		return {'mutect2_pon': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], 'all_samples', 'variant_prep', 'mutect2_pon.vcf.gz')), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], 'all_samples', 'log', 'mutect2_pon_err.txt'))}
+		outputs = {'mutect2_pon': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], 'all_samples', 'variant_prep', 'mutect2_pon.vcf.gz')), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], 'all_samples', 'log', 'mutect2_pon_err.txt'))}
+		for task in outputs:
+			if isinstance(outputs[task], luigi.LocalTarget):
+				pipeline_utils.confirm_path(outputs[task].path)
+		return outputs
+
 
 	def run(self):
 		cmd = ['gatk4', 'CreateSomaticPanelOfNormals', '-R', self.cfg['fasta_file'], '-O', self.output()['mutect2_pon'].path]
@@ -72,7 +77,11 @@ class mutect2(luigi.Task):
 		return requirements
 
 	def output(self):
-		return {'mutect2': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variant_prep', '%s_mutect2.vcf.gz' % self.case)), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_mutect2_err.txt' % self.case))}
+		outputs = {'mutect2': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variant_prep', '%s_mutect2.vcf.gz' % self.case)), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_mutect2_err.txt' % self.case))}
+		for task in outputs:
+			if isinstance(outputs[task], luigi.LocalTarget):
+				pipeline_utils.confirm_path(outputs[task].path)
+		return outputs
 
 	def run(self):
 		cmd = ['gatk4', 'Mutect2', '-R', self.cfg['fasta_file'], '--native-pair-hmm-threads', self.cfg['max_threads'], '--germline-resource', self.cfg['gnomad'], '--panel-of-normals', self.input()['mutect2_pon']['mutect2_pon'].path, '-I', self.input()['T']['preprocess']['bam'].path, '-O', self.output()['mutect2'].path]
@@ -102,6 +111,13 @@ class lofreq(luigi.Task):
 			outputs['lofreq'] = [luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variant_prep', '%s_lofreq_somatic_final_minus-dbsnp.%s.vcf.gz' % (self.case, variant_type))) for variant_type in ['snvs', 'indels']]
 		else:
 			outputs['lofreq'] = [luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variant_prep', '%s_lofreq.vcf.gz' % self.case))]
+		for task in outputs:
+			if isinstance(outputs[task], luigi.LocalTarget):
+				pipeline_utils.confirm_path(outputs[task].path)
+			elif isinstance(outputs[task], list):
+				for item in outputs[task]:
+					if isinstance(item, luigi.LocalTarget):
+						pipeline_utils.confirm_path(item.path)
 		return outputs
 
 	def run(self):
