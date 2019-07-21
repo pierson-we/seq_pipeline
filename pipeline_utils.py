@@ -86,7 +86,7 @@ def cluster_command_call(task, cmd, threads, ram, cfg, err_log=False, refresh_ti
 				run_start = update_time
 			task.set_status_message('Running for %s mins' % round((update_time - run_start)/60, 2))
 			time.sleep(refresh_time)
-		elif stat == 'exiting':
+		elif status == 'exiting':
 			task.set_status_message('Job complete')
 			time.sleep(refresh_time)
 		else:
