@@ -78,12 +78,12 @@ def cluster_command_call(task, cmd, threads, ram, cfg, err_log=False, refresh_ti
 		update_time = time.time()
 		status = get_job_status(jobid)
 		if status == 'queue':
-			task.set_status_message('In job queue for %s mins' % round(update_time - queue_start, 2))
+			task.set_status_message('In job queue for %s mins' % round((update_time - queue_start)/60, 2))
 			time.sleep(refresh_time)
 		elif status == 'run':
 			if run_start == 0:
 				run_start = update_time
-			task.set_status_message('Running for %s mins' % round(update_time - run_start, 2))
+			task.set_status_message('Running for %s mins' % round((update_time - run_start)/60, 2))
 			time.sleep(refresh_time)
 		elif stat == 'exiting':
 			task.set_status_message('Job complete')
@@ -91,9 +91,9 @@ def cluster_command_call(task, cmd, threads, ram, cfg, err_log=False, refresh_ti
 		else:
 			done = time.time()
 			break
-	queue_time = round(run_start - queue_start, 2)
-	run_time = round(done - run_start, 2)
-	total_time = round(done - queue_start, 2)
+	queue_time = round((run_start - queue_start)/60, 2)
+	run_time = round((done - run_start)/60, 2)
+	total_time = round((done - queue_start)/60, 2)
 	if err_log:
 		with open(job_script_file + '.e' + jobid, 'r') as f:
 			with open(err_log, 'w') as f2:
