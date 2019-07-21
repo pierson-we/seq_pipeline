@@ -124,7 +124,7 @@ def submit_job(cmd, threads, ram, cfg, task_id):
 
 	job_script = 'module load CBC python udocker\n'
 	job_script += 'chmod 755 %s\n' % sys_task_script_file
-	job_script += 'udocker run --novol=/etc/host.conf --novol=/etc/resolv.conf -v %s:/root/pipeline/resources -v %s:/root/pipeline/code -v %s:/root/input -v %s/output:/root/output seq_pipeline %s' % (cfg['resources_dir'], cfg['code_dir'], cfg['input_dir'], cfg['output_dir'], docker_task_script_file)
+	job_script += 'udocker run --novol=/etc/host.conf --novol=/etc/resolv.conf -v %s:/root/pipeline/resources -v %s:/root/pipeline/code -v %s:/root/input -v %s:/root/output seq_pipeline %s' % (cfg['resources_dir'], cfg['code_dir'], cfg['input_dir'], cfg['output_dir'], docker_task_script_file)
 	job_script_file = os.path.join(cfg['output_dir'], 'job_scripts', '%s.sh' % task_id)
 	confirm_path(job_script_file)
 	with open(job_script_file, 'w') as f:
