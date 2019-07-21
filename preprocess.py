@@ -82,7 +82,7 @@ class align(luigi.Task):
 
 	def run(self):
 		read_group = pipeline_utils.assign_rg(self.input()['trim']['trimgalore'][0].path, self.input()['trim']['trimgalore'][1].path, self.case, self.sample, self.cfg)
-		cmds = ['bwa', 'mem', '-M', '-t', self.cfg['max_threads'], '-R', "'%s'" % read_group, self.cfg['fasta_file'], self.input()['trim']['trimgalore'][0].path, self.input()['trim']['trimgalore'][1].path, '|', 'samtools', 'view', '-bh', '|', 'samtools', 'sort', '-o', self.output()['bwa_mem'].path]
+		cmd = ['bwa', 'mem', '-M', '-t', self.cfg['max_threads'], '-R', "'%s'" % read_group, self.cfg['fasta_file'], self.input()['trim']['trimgalore'][0].path, self.input()['trim']['trimgalore'][1].path, '|', 'samtools', 'view', '-bh', '|', 'samtools', 'sort', '-o', self.output()['bwa_mem'].path]
 		pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=12, cfg=self.cfg, err_log=self.output()['err_log'].path)
 
 class merge_bams(luigi.Task):

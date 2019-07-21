@@ -70,7 +70,7 @@ def piped_command_call(cmds, err_log, output_file=False):
 	with open(err_log, 'a') as f:
 		f.write('\n\n***\nCommand completed in %s minutes\n***' % round((end-start)/60, 2))
 
-def cluster_command_call(task, cmd, threads, ram, cfg, err_log=False, refresh_time=60):
+def cluster_command_call(task, cmd, threads, ram, cfg, err_log=False, refresh_time=30):
 	jobid, task_script_file, job_script_file = submit_job(cmd, threads, ram, cfg, task.task_id)
 	queue_start = time.time()
 	run_start = 0
@@ -84,6 +84,9 @@ def cluster_command_call(task, cmd, threads, ram, cfg, err_log=False, refresh_ti
 			if run_start == 0:
 				run_start = update_time
 			task.set_status_message('Running for %s mins' % round(update_time - run_start, 2))
+			time.sleep(refresh_time)
+		elif stat == 'exiting':
+			task.set_status_message('Job complete')
 			time.sleep(refresh_time)
 		else:
 			done = time.time()
@@ -143,8 +146,10 @@ def get_job_status(jobid):
 		status = qstat_out[qstat_out.find(jobid):].split('\n')[0].split()[-2]
 		if status == 'R':
 			return 'run'
-		else:
+		elif status == 'Q':
 			return 'queue'
+		else:
+			return 'exiting'
 	else:
 		return 'done'
 
