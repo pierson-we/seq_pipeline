@@ -5,6 +5,7 @@ import subprocess
 import random
 import pickle
 import preprocess
+import errno
 
 # global_max_threads = 0
 # thread_file = ''
@@ -12,8 +13,8 @@ import preprocess
 # cwd = ''
 
 def confirm_path(file):
-	wait_time = random.uniform(0,0.1)
-	time.sleep(wait_time)
+	# wait_time = random.uniform(0,0.1)
+	# time.sleep(wait_time)
 	if not os.path.exists(os.path.dirname(file)):
 		try:
 			os.makedirs(os.path.dirname(file))
