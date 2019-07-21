@@ -68,6 +68,82 @@ def piped_command_call(cmds, err_log, output_file=False):
 	with open(err_log, 'a') as f:
 		f.write('\n\n***\nCommand completed in %s minutes\n***' % round((end-start)/60, 2))
 
+def cluster_command_call(task, cmd, threads, ram, cfg, err_log=False, refresh_time=60):
+	jobid, task_script_file, job_script_file = submit_job(cmd, threads, ram, job_scipt_dir, task.task_id)
+	queue_start = time.time()
+	run_start = 0
+	while True:
+		update_time = time.time()
+		status = get_job_status(jobid)
+		if status == 'queue':
+			task.set_status_message('In job queue for %s mins' % round(update_time - queue_start, 2))
+			time.sleep(refresh_time)
+		elif status == 'run':
+			if run_start == 0:
+				run_start = update_time
+			task.set_status_message('Running for %s mins' % round(update_time - run_start, 2))
+			time.sleep(refresh_time)
+		else:
+			done = time.time()
+			break
+	queue_time = round(run_start - queue_start, 2)
+	run_time = round(done - run_start, 2)
+	total_time = round(done - queue_start, 2)
+	if err_log:
+		with open(job_script_file + jobid, 'r') as f:
+			with open(err_log, 'w') as f2:
+				f2.write(f.read())
+
+	return (total_time, run_time, queue_time)
+
+def submit_job(cmd, threads, ram, cfg, task_id):
+	cwd = os.getcwd()
+	cmd = ' '.join(cmd)
+	for (sys_path, docker_path) in [(cfg['resources_dir'], '/root/pipeline/resources'), (cfg['code_dir'], '/root/pipeline/code'), (cfg['input_dir'], '/root/input'), (cfg['output_dir'], '/root/output')]:
+		cmd = cmd.replace(os.path.dirname(sys_path), os.path.dirname(docker_path))
+
+	task_script = 'echo "export LD_LIBRARY_PATH=/usr/lib/jvm/java-1.8.0-openjdk-amd64/lib/amd64/jli" >> /root/.profile\n'
+	task_script += 'echo "search som.ucsf.edu ucsf.edu ucsfmedicalcenter.org medschool.ucsf.edu campus.net" > /etc/resolv.conf\n'
+	task_script += 'echo "nameserver 128.218.87.135" >> /etc/resolv.conf\n'
+	task_script += 'echo "nameserver 64.54.144.10" >> /etc/resolv.conf\n'
+	task_script += 'echo "nameserver 128.218.224.175" >> /etc/resolv.conf\n'
+	task_script += '. /root/.profile\n'
+	task_script += 'alias python=/usr/bin/python3.6\n'
+	task_script += 'alias python3=/usr/bin/python3.6\n'
+	task_script += ' '.join(cmd)
+	sys_task_script_file = os.path.join(cfg['output_dir'], 'task_scripts', '%s.sh' % task_id)
+	confirm_path(sys_task_script_file)
+	docker_task_script_file = os.path.join('/root', 'output', 'task_scripts', '%s.sh' % task_id)
+
+	with open(sys_task_script_file, 'w') as f:
+		f.write(task_script)
+
+	job_script = 'module load CBC python udocker\n'
+	job_script += 'chmod -755 %s' % sys_task_script_file
+	job_script += 'udocker run --novol=/etc/host.conf --novol=/etc/resolv.conf -v %s:/root/pipeline/resources -v %s:/root/pipeline/code -v %s:/root/input -v $%s/output:/root/output seq_pipeline %s' % (cfg['resources_dir'], cfg['code_dir'], cfg['input_dir'], cfg['output_dir'], docker_task_script_file)
+	job_script_file = os.path.join(cfg['output_dir'], 'job_scripts', '%s.sh' % task_id)
+	confirm_path(job_script_file)
+	with open(job_script_file, 'w') as f:
+		f.write(job_script)
+
+	os.chdir(os.path.dirname(job_script_file))
+	p = subprocess.Popen('qsub -l vmem=%sgb -l nodes=1:ppn=%s %s' % (str(ram), str(threads), job_script_file), stdout=subprocess.PIPE, shell=True)
+	jobid = p.stdout.read().decode('utf-8').split('.')[0]
+	os.chdir(cwd)
+	return jobid, sys_task_script_file, job_script_file
+
+def get_job_status(jobid):
+	p = subprocess.Popen('qstat -alt', stdout=subprocess.PIPE, shell=True)
+	qstat_out = p.stdout.read().decode('utf-8')
+	if jobid in qstat_out:
+		status = qstat_out[qstat_out.find('1383429'):].split('\n')[0].split()[-2]
+		if status == 'R':
+			return 'run'
+		else:
+			return 'queue'
+	else:
+		return 'done'
+
 def assign_rg(fastq1, fastq2, case, sample, cfg):
 	import gzip
 	headers = []

@@ -12,9 +12,9 @@ class mutect2_normal(luigi.Task):
 	case = luigi.Parameter()
 	sample = luigi.Parameter()
 
-	@property # This is necessary to assign a dynamic value to the 'threads' resource within a task
-	def resources(self):
-		return {'threads': self.cfg['max_threads']}
+	# @property # This is necessary to assign a dynamic value to the 'threads' resource within a task
+	# def resources(self):
+	# 	return {'threads': self.cfg['max_threads']}
 
 	def requires(self):
 		return {'preprocess': preprocess.preprocess(case=self.case, sample=self.sample, cfg=self.cfg)}
@@ -28,15 +28,12 @@ class mutect2_normal(luigi.Task):
 
 	def run(self):
 		cmd = ['gatk4', 'Mutect2', '-R', self.cfg['fasta_file'], '--native-pair-hmm-threads', self.cfg['max_threads'], '-I', self.input()['preprocess']['bam'].path, '-O', self.output()['mutect2_normal'].path]
-		pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
+		pipeline_utils.command_call(self, cmd, threads=self.cfg['max_threads'], ram=16, cfg=self.cfg, err_log=self.output()['err_log'].path)
 
 class mutect2_pon(luigi.Task):
 	priority = 80
+	# resources = {'threads': 1}
 	cfg = luigi.DictParameter()
-
-	@property # This is necessary to assign a dynamic value to the 'threads' resource within a task
-	def resources(self):
-		return {'threads': self.cfg['max_threads']}
 
 	def requires(self):
 		requirements = {}
@@ -57,7 +54,7 @@ class mutect2_pon(luigi.Task):
 		cmd = ['gatk4', 'CreateSomaticPanelOfNormals', '-R', self.cfg['fasta_file'], '-O', self.output()['mutect2_pon'].path]
 		for case in self.input():
 			cmd += ['-vcfs', self.input()[case]['mutect2_normal']['mutect2_normal'].path]
-		pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
+		pipeline_utils.command_call(self, cmd, threads=1, ram=12, cfg=self.cfg, err_log=self.output()['err_log'].path)
 
 class mutect2(luigi.Task):
 	priority = 80
@@ -65,9 +62,9 @@ class mutect2(luigi.Task):
 
 	case = luigi.Parameter()
 
-	@property # This is necessary to assign a dynamic value to the 'threads' resource within a task
-	def resources(self):
-		return {'threads': self.cfg['max_threads']}
+	# @property # This is necessary to assign a dynamic value to the 'threads' resource within a task
+	# def resources(self):
+	# 	return {'threads': self.cfg['max_threads']}
 
 	def requires(self):
 		requirements = {'mutect2_pon': mutect2_pon(cfg=self.cfg)}
@@ -87,7 +84,7 @@ class mutect2(luigi.Task):
 		cmd = ['gatk4', 'Mutect2', '-R', self.cfg['fasta_file'], '--native-pair-hmm-threads', self.cfg['max_threads'], '--germline-resource', self.cfg['gnomad'], '--panel-of-normals', self.input()['mutect2_pon']['mutect2_pon'].path, '-I', self.input()['T']['preprocess']['bam'].path, '-O', self.output()['mutect2'].path]
 		if 'N' in self.cfg['cases'][self.case]:
 			cmd += ['-I', self.input()['T']['preprocess']['bam'].path, '-normal', '%s_N' % self.case]
-		pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
+		pipeline_utils.command_call(self, cmd, threads=self.cfg['max_threads'], ram=16, cfg=self.cfg, err_log=self.output()['err_log'].path)
 
 class lofreq(luigi.Task):
 	priority = 80
@@ -95,9 +92,9 @@ class lofreq(luigi.Task):
 
 	case = luigi.Parameter()
 
-	@property # This is necessary to assign a dynamic value to the 'threads' resource within a task
-	def resources(self):
-		return {'threads': self.cfg['max_threads']}
+	# @property # This is necessary to assign a dynamic value to the 'threads' resource within a task
+	# def resources(self):
+	# 	return {'threads': self.cfg['max_threads']}
 
 	def requires(self):
 		requirements = {'T': {'preprocess': preprocess.preprocess(case=self.case, sample='T', cfg=self.cfg)}}
@@ -125,7 +122,7 @@ class lofreq(luigi.Task):
 			cmd = ['lofreq', 'call-parallel', '-f', self.cfg['fasta_file'], '--call-indels', '--threads', self.cfg['max_threads'], '-l', self.cfg['library_bed'], '-d', self.cfg['germline_all'], '-o', self.output()['lofreq'][0].path.split('somatic_final_minus-dbsnp')[0], '-n', self.input()['N']['preprocess']['bam'].path, '-t', self.input()['T']['preprocess']['bam'].path]
 		else:
 			cmd = ['lofreq', 'somatic', '-f', self.cfg['fasta_file'], '--call-indels', '--pp-threads', self.cfg['max_threads'], '-l', self.cfg['library_bed'], '-s', '-S', self.cfg['germline_all'], '-o', self.output()['lofreq'][0].path, self.input()['T']['preprocess']['bam'].path]
-		pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
+		pipeline_utils.command_call(self, cmd, threads=self.cfg['max_threads'], ram=12, cfg=self.cfg, err_log=self.output()['err_log'].path)
 
 class manta(luigi.Task):
 	priority = 80
@@ -133,9 +130,9 @@ class manta(luigi.Task):
 
 	case = luigi.Parameter()
 
-	@property # This is necessary to assign a dynamic value to the 'threads' resource within a task
-	def resources(self):
-		return {'threads': self.cfg['max_threads']}
+	# @property # This is necessary to assign a dynamic value to the 'threads' resource within a task
+	# def resources(self):
+	# 	return {'threads': self.cfg['max_threads']}
 
 	def requires(self):
 		return {'T': {'preprocess': preprocess.preprocess(case=self.case, sample='T', cfg=self.cfg)}, 'N': {'preprocess': preprocess.preprocess(case=self.case, sample='N', cfg=self.cfg)}}
@@ -149,9 +146,9 @@ class manta(luigi.Task):
 
 	def run(self):
 		cmd = ['$MANTA/bin/configManta.py', '--exome', '--referenceFasta', self.cfg['fasta_file'], '--normalBam', self.input()['N']['preprocess']['bam'].path, '--tumorBam', self.input()['T']['preprocess']['bam'].path, '--rundir', os.path.join(self.cfg['output_dir'], self.case, 'variant_prep', 'manta')] # TODO add logic for exome to handle multiple sequencing preps
-		pipeline_utils.command_call(cmd)
+		pipeline_utils.command_call(self, cmd, threads=1, ram=1, cfg=self.cfg)
 		cmd = [os.path.join(self.cfg['output_dir'], self.case, 'variant_prep', 'manta', 'runWorkflow.py'), '-j', self.max_threads]
-		pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
+		pipeline_utils.command_call(self, cmd, threads=self.cfg['max_threads'], ram=12, cfg=self.cfg, err_log=self.output()['err_log'].path)
 
 class strelka(luigi.Task):
 	priority = 80
@@ -159,9 +156,9 @@ class strelka(luigi.Task):
 
 	case = luigi.Parameter()
 
-	@property # This is necessary to assign a dynamic value to the 'threads' resource within a task
-	def resources(self):
-		return {'threads': self.cfg['max_threads']}
+	# @property # This is necessary to assign a dynamic value to the 'threads' resource within a task
+	# def resources(self):
+	# 	return {'threads': self.cfg['max_threads']}
 
 	def requires(self):
 		return {'manta': manta(case=self.case, cfg=self.cfg), 'T': {'preprocess': preprocess.preprocess(case=self.case, sample='T', cfg=self.cfg)}, 'N': {'preprocess': preprocess.preprocess(case=self.case, sample='N', cfg=self.cfg)}}
@@ -175,9 +172,9 @@ class strelka(luigi.Task):
 
 	def run(self):
 		cmd = ['$STRELKA/bin/configureStrelkaSomaticWorkflow.py', '--exome', '--referenceFasta', self.cfg['fasta_file'], '--normalBam', self.input()['N']['preprocess']['bam'].path, '--tumorBam', self.input()['T']['preprocess']['bam'].path, '--indelCandidates', self.input()['manta']['manta'].path, '--rundir', os.path.join(self.cfg['output_dir'], self.case, 'variant_prep', 'strelka')]
-		pipeline_utils.command_call(cmd)
+		pipeline_utils.command_call(self, cmd, threads=1, ram=1, cfg=self.cfg)
 		cmd = [os.path.join(self.cfg['output_dir'], self.case, 'variant_prep', 'strelka', 'runWorkflow.py'), '-m', 'local', '-j', self.cfg['max_threads']]
-		pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
+		pipeline_utils.command_call(self, cmd, threads=self.cfg['max_threads'], ram=12, cfg=self.cfg, err_log=self.output()['err_log'].path)
 
 class scalpel_discovery(luigi.Task):
 	priority = 80
@@ -185,9 +182,9 @@ class scalpel_discovery(luigi.Task):
 
 	case = luigi.Parameter()
 
-	@property # This is necessary to assign a dynamic value to the 'threads' resource within a task
-	def resources(self):
-		return {'threads': self.cfg['max_threads']}
+	# @property # This is necessary to assign a dynamic value to the 'threads' resource within a task
+	# def resources(self):
+	# 	return {'threads': self.cfg['max_threads']}
 
 	def requires(self):
 		requirements = {'T': {'preprocess': preprocess.preprocess(case=self.case, sample='T', cfg=self.cfg)}}
@@ -211,11 +208,11 @@ class scalpel_discovery(luigi.Task):
 			cmd = ['scalpel-discovery', '--somatic', '--two-pass', '--ref', self.cfg['fasta_file'], '--bed', self.cfg['library_bed'], '--numprocs', self.cfg['max_threads'], '--dir', os.path.dirname(self.output()['scalpel_discovery'].path.split('twopass')[0]), '--format', 'vcf', '--normal', self.input()['N']['preprocess']['bam'].path, '--tumor', self.input()['T']['preprocess']['bam'].path]
 		else:
 			cmd = ['scalpel-discovery', '--single', '--ref', self.cfg['fasta_file'], '--bed', self.cfg['library_bed'], '--numprocs', self.cfg['max_threads'], '--dir', os.path.dirname(self.output()['scalpel_discovery'].path), '--format', 'vcf', '--bam', self.input()['T']['preprocess']['bam'].path]
-		pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
+		pipeline_utils.command_call(self, cmd, threads=self.cfg['max_threads'], ram=16, cfg=self.cfg, err_log=self.output()['err_log'].path)
 
 class scalpel_export(luigi.Task):
 	priority = 80
-	resources = {'threads': 1}
+	# resources = {'threads': 1}
 	cfg = luigi.DictParameter()
 
 	case = luigi.Parameter()
@@ -239,11 +236,11 @@ class scalpel_export(luigi.Task):
 			cmd = ['scalpel-export', '--somatic', '--ref', self.cfg['fasta_file'], '--bed', self.cfg['library_bed'],'-db', self.input()['scalpel_discovery']['scalpel_discovery'].path, '--output-format', 'vcf']
 		else:
 			cmd = ['scalpel-export', '--single', '--ref', self.cfg['fasta_file'], '--bed', self.cfg['library_bed'],'-db', self.input()['scalpel_discovery']['scalpel_discovery'].path, '--output-format', 'vcf']
-		pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
+		pipeline_utils.command_call(self, cmd, threads=1, ram=5, cfg=self.cfg, err_log=self.output()['err_log'].path)
 
 class variant_calling(luigi.Task):
 	priority = 80
-	resources = {'threads': 1}
+	# resources = {'threads': 1}
 	cfg = luigi.DictParameter()
 
 	case = luigi.Parameter()

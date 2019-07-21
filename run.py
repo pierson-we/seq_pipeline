@@ -39,7 +39,7 @@ def run_pipeline(args):
 	worker_scheduler_factory = luigi.interface._WorkerSchedulerFactory()
 	# luigi.interface.core.threads = luigi.parameter.IntParameter(default=args.max_threads, description='total number of threads available for use by the pipeline', config_path=dict(section='resources', name='threads'),)
 
-	luigi.build([cases(sample_dict=sample_dict, project_dir=args.project_dir, global_max_threads=args.max_threads, max_threads=sample_threads, cwd=os.getcwd())], workers=args.workers, local_scheduler=args.local_scheduler, worker_scheduler_factory=worker_scheduler_factory) # , workers=args.workers #, scheduler_port=int(args.port)) # workers=sample_threads , resources={'threads': args.max_threads}
+	luigi.build([cases(sample_dict=sample_dict, project_dir=args.project_dir, global_max_threads=args.max_threads, max_threads=sample_threads, input_dir=args.sample_dir, cwd=os.getcwd())], workers=args.workers, local_scheduler=args.local_scheduler, worker_scheduler_factory=worker_scheduler_factory) # , workers=args.workers #, scheduler_port=int(args.port)) # workers=sample_threads , resources={'threads': args.max_threads}
 
 class cases(luigi.Task):
 	# generated parameters
@@ -47,9 +47,12 @@ class cases(luigi.Task):
 	project_dir = luigi.Parameter()
 	global_max_threads = luigi.IntParameter()
 	max_threads = luigi.IntParameter()
+	input_dir = luigi.Parameter()
 	cwd = luigi.Parameter()
 
 	# cfg parameters
+	resources_dir = luigi.Parameter()
+	code_dir = luigi.Parameter()
 	fasta_file = luigi.Parameter()
 	germline_indels = luigi.Parameter()
 	germline_all = luigi.Parameter()
@@ -92,6 +95,9 @@ class cases(luigi.Task):
 
 	def requires(self):
 		cfg = {
+			'resources_dir': self.resources_dir, 
+			'code_dir': self.code_dir,
+			'input_dir': self.input_dir,
 			'fasta_file': self.fasta_file,
 			'cases': self.sample_dict,
 			'output_dir': os.path.join(self.project_dir, 'output'),
@@ -173,18 +179,18 @@ if __name__ == '__main__':
 
 	args = parser.parse_args()
 	
-	with open(os.getenv('LUIGI_CONFIG_PATH'), 'r') as f:
-		config = f.read().split('[')
-	new_config = []
-	for section in config:
-		if not section.startswith('resources]'):
-			new_config.append(section)
-	new_config = '['.join(new_config)
-	while not new_config.endswith('\n\n'):
-		new_config += '\n'
-	new_config += '[resources]\nthreads=%s' % str(args.max_threads)
-	with open(os.getenv('LUIGI_CONFIG_PATH'), 'w') as f:
-		f.write(new_config)
+	# with open(os.getenv('LUIGI_CONFIG_PATH'), 'r') as f:
+	# 	config = f.read().split('[')
+	# new_config = []
+	# for section in config:
+	# 	if not section.startswith('resources]'):
+	# 		new_config.append(section)
+	# new_config = '['.join(new_config)
+	# while not new_config.endswith('\n\n'):
+	# 	new_config += '\n'
+	# new_config += '[resources]\nthreads=%s' % str(args.max_threads)
+	# with open(os.getenv('LUIGI_CONFIG_PATH'), 'w') as f:
+	# 	f.write(new_config)
 
 	run_pipeline(args)
 
