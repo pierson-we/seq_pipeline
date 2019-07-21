@@ -70,7 +70,8 @@ def piped_command_call(cmds, err_log, output_file=False):
 		f.write('\n\n***\nCommand completed in %s minutes\n***' % round((end-start)/60, 2))
 
 def cluster_command_call(task, cmd, threads, ram, cfg, err_log=False, refresh_time=60):
-	jobid, task_script_file, job_script_file = submit_job(cmd, threads, ram, job_scipt_dir, task.task_id)
+	print(task.task_id)
+	jobid, task_script_file, job_script_file = submit_job(cmd, threads, ram, cfg, task.task_id)
 	queue_start = time.time()
 	run_start = 0
 	while True:
