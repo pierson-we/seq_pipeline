@@ -6,6 +6,7 @@ import random
 import pickle
 import preprocess
 import errno
+import glob
 
 # global_max_threads = 0
 # thread_file = ''
@@ -70,7 +71,6 @@ def piped_command_call(cmds, err_log, output_file=False):
 		f.write('\n\n***\nCommand completed in %s minutes\n***' % round((end-start)/60, 2))
 
 def cluster_command_call(task, cmd, threads, ram, cfg, err_log=False, refresh_time=60):
-	print(task.task_id)
 	jobid, task_script_file, job_script_file = submit_job(cmd, threads, ram, cfg, task.task_id)
 	queue_start = time.time()
 	run_start = 0
@@ -92,11 +92,12 @@ def cluster_command_call(task, cmd, threads, ram, cfg, err_log=False, refresh_ti
 	run_time = round(done - run_start, 2)
 	total_time = round(done - queue_start, 2)
 	if err_log:
-		with open(job_script_file + jobid, 'r') as f:
+		with open(job_script_file + '.e' + jobid, 'r') as f:
 			with open(err_log, 'w') as f2:
 				f2.write(f.read())
 	os.remove(task_script_file)
-	os.remove(job_script_file)
+	for file in glob.glob(job_script_file + '*'):
+		os.remove(file)
 	return (total_time, run_time, queue_time)
 
 def submit_job(cmd, threads, ram, cfg, task_id):
