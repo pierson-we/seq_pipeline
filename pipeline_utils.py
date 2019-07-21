@@ -138,7 +138,7 @@ def get_job_status(jobid):
 	p = subprocess.Popen('qstat -alt', stdout=subprocess.PIPE, shell=True)
 	qstat_out = p.stdout.read().decode('utf-8')
 	if jobid in qstat_out:
-		status = qstat_out[qstat_out.find('1383429'):].split('\n')[0].split()[-2]
+		status = qstat_out[qstat_out.find(jobid):].split('\n')[0].split()[-2]
 		if status == 'R':
 			return 'run'
 		else:
