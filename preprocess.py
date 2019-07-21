@@ -15,7 +15,7 @@ class samtools_index(luigi.Task):
 	
 	def run(self):
 		cmd = ['samtools', 'faidx', self.cfg['fasta_file']]
-		pipeline_utils.command_call(self, cmd, threads=1, ram=5, cfg=self.cfg) #, err_log=self.output()['err_log'].path)
+		pipeline_utils.cluster_command_call(self, cmd, threads=1, ram=5, cfg=self.cfg) #, err_log=self.output()['err_log'].path)
 
 class picard_index(luigi.Task):
 	priority = 100
@@ -27,7 +27,7 @@ class picard_index(luigi.Task):
 	
 	def run(self):
 		cmd = ['java', '-jar', '$PICARD', 'CreateSequenceDictionary', 'R=%s' % self.cfg['fasta_file'], 'O=%s' % self.output().path]
-		pipeline_utils.command_call(self, cmd, threads=1, ram=5, cfg=self.cfg) #, err_log=self.output()['err_log'].path)
+		pipeline_utils.cluster_command_call(self, cmd, threads=1, ram=5, cfg=self.cfg) #, err_log=self.output()['err_log'].path)
 		shutil.copyfile(self.output()['picard_index'].path, self.cfg['fasta_file'].split('.fa')[0] + '.dict')
 
 
@@ -41,7 +41,7 @@ class bwa_index(luigi.Task):
 	
 	def run(self):
 		cmd = ['bwa', 'index', '-a', 'bwtsw', self.cfg['fasta_file']]
-		pipeline_utils.command_call(self, cmd, threads=1, ram=5, cfg=self.cfg) #, err_log=self.output()['err_log'].path)
+		pipeline_utils.cluster_command_call(self, cmd, threads=1, ram=5, cfg=self.cfg) #, err_log=self.output()['err_log'].path)
 
 # https://github.com/FelixKrueger/TrimGalore/blob/master/Docs/Trim_Galore_User_Guide.md
 class trim(luigi.Task):
@@ -60,7 +60,7 @@ class trim(luigi.Task):
 		cmd = ['trim_galore', '--fastqc', '--fastqc_args "--outdir %s"' % os.path.dirname(self.output()['fastqc'][0].path), '--paired', '-o', os.path.dirname(self.output()['trimgalore'][0].path), '--basename', '%s_%s_%s' % (self.case, self.sample, self.lane), '--gzip', self.cfg['cases'][self.case][self.sample][self.lane]['fastq1'], self.cfg['cases'][self.case][self.sample][self.lane]['fastq2']]
 		pipeline_utils.confirm_path(self.output()['trimgalore'][0].path)
 		pipeline_utils.confirm_path(self.output()['fastqc'][0].path)
-		pipeline_utils.command_call(self, cmd, threads=1, ram=5, cfg=self.cfg, err_log=self.output()['err_log'].path)
+		pipeline_utils.cluster_command_call(self, cmd, threads=1, ram=5, cfg=self.cfg, err_log=self.output()['err_log'].path)
 
 class align(luigi.Task):
 	priority = 100
@@ -83,7 +83,7 @@ class align(luigi.Task):
 	def run(self):
 		read_group = pipeline_utils.assign_rg(self.input()['trim']['trimgalore'][0].path, self.input()['trim']['trimgalore'][1].path, self.case, self.sample, self.cfg)
 		cmds = ['bwa', 'mem', '-M', '-t', self.cfg['max_threads'], '-R', "'%s'" % read_group, self.cfg['fasta_file'], self.input()['trim']['trimgalore'][0].path, self.input()['trim']['trimgalore'][1].path, '|', 'samtools', 'view', '-bh', '|', 'samtools', 'sort', '-o', self.output()['bwa_mem'].path]
-		pipeline_utils.command_call(self, cmd, threads=self.cfg['max_threads'], ram=12, cfg=self.cfg, err_log=self.output()['err_log'].path)
+		pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=12, cfg=self.cfg, err_log=self.output()['err_log'].path)
 
 class merge_bams(luigi.Task):
 	priority = 100
@@ -107,7 +107,7 @@ class merge_bams(luigi.Task):
 			cmd = ['java', '-jar', '$PICARD', 'MergeSamFiles', 'O=%s' % self.output()['merge_bams'].path]
 			for lane in self.input():
 				cmd += ['I=%s' % self.input()[lane]['align']['bwa_mem'].path]
-			pipeline_utils.command_call(self, cmd, threads=1, ram=5, cfg=self.cfg, err_log=self.output()['err_log'].path)
+			pipeline_utils.cluster_command_call(self, cmd, threads=1, ram=5, cfg=self.cfg, err_log=self.output()['err_log'].path)
 		else:
 			for lane in self.input():
 				shutil.move(self.input()[lane]['align']['bwa_mem'].path, self.output()['merge_bams'].path)
@@ -134,7 +134,7 @@ class mark_duplicates(luigi.Task):
 
 	def run(self):
 		cmd = ['java', '-jar', '$PICARD', 'MarkDuplicates', 'I=%s' % self.input()['merge_bams']['merge_bams'].path, 'O=%s' % self.output()['mark_duplicates']['bam'].path, 'M=%s' % self.output()['mark_duplicates']['metrics'].path, 'TAGGING_POLICY=All']
-		pipeline_utils.command_call(self, cmd, threads=self.cfg['max_threads'], ram=5, cfg=self.cfg, err_log=self.output()['err_log'].path)
+		pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=5, cfg=self.cfg, err_log=self.output()['err_log'].path)
 
 class index_bam(luigi.Task):
 	priority = 100
@@ -155,7 +155,7 @@ class index_bam(luigi.Task):
 
 	def run(self):
 		cmd = ['samtools', 'index', self.input()['mark_duplicates']['mark_duplicates']['bam'].path]
-		pipeline_utils.command_call(self, cmd, threads=self.cfg['max_threads'], ram=5, cfg=self.cfg, err_log=self.output()['err_log'].path)
+		pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=5, cfg=self.cfg, err_log=self.output()['err_log'].path)
 
 class realigner_target(luigi.Task):
 	priority = 90
@@ -187,7 +187,7 @@ class realigner_target(luigi.Task):
 				realigned_filename = filename.split('marked_duplicates.bam')[0] + 'realigned.bam'
 				file_map.append('%s\t%s' % (os.path.basename(filename), realigned_filename))
 				cmd += ['-I', filename]
-		pipeline_utils.command_call(self, cmd, threads=self.cfg['global_max_threads'], ram=48, cfg=self.cfg, err_log=self.output()['err_log'].path)
+		pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['global_max_threads'], ram=48, cfg=self.cfg, err_log=self.output()['err_log'].path)
 		pipeline_utils.confirm_path(self.output()['file_map'].path)
 		with open(self.output()['file_map'].path, 'w') as f:
 			f.write('\n'.join(file_map))
@@ -226,7 +226,7 @@ class indel_realigner(luigi.Task):
 			for sample in self.input()['cases'][case]:
 				filename = self.input()['cases'][case][sample]['mark_duplicates']['mark_duplicates']['bam'].path
 				cmd += ['-I', filename]
-		pipeline_utils.command_call(self, cmd, threads=self.cfg['global_max_threads'], ram=48, cfg=self.cfg, err_log=self.output()['err_log'].path)
+		pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['global_max_threads'], ram=48, cfg=self.cfg, err_log=self.output()['err_log'].path)
 		# self.input()['realigner_target']['file_map'].remove()
 
 class base_recalibrator(luigi.Task):
@@ -248,7 +248,7 @@ class base_recalibrator(luigi.Task):
 
 	def run(self):
 		cmd = ['java', '-jar', '$GATK3', '-T', 'BaseRecalibrator', '-I', self.input()['indel_realigner']['indel_realigner'][self.case][self.sample].path, '-R', self.cfg['fasta_file'], '-knownSites', self.cfg['germline_all'], '-nct', self.cfg['max_threads'], '-o', self.output()['base_recalibrator'].path]
-		pipeline_utils.command_call(self, cmd, threads=self.cfg['max_threads'], ram=12, cfg=self.cfg, err_log=self.output()['err_log'].path)
+		pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=12, cfg=self.cfg, err_log=self.output()['err_log'].path)
 
 class apply_bqsr(luigi.Task):
 	priority = 90
@@ -266,7 +266,7 @@ class apply_bqsr(luigi.Task):
 
 	def run(self):
 		cmd = ['java', '-jar', '$GATK3', '-T', 'PrintReads', '-I', self.input()['indel_realigner']['indel_realigner'][self.case][self.sample].path, '-R', self.cfg['fasta_file'], '-BQSR', self.input()['base_recalibrator']['base_recalibrator'].path, '-o', self.output()['apply_bqsr'].path]
-		pipeline_utils.command_call(self, cmd, threads=1, ram=5, cfg=self.cfg, err_log=self.output()['err_log'].path)
+		pipeline_utils.cluster_command_call(self, cmd, threads=1, ram=5, cfg=self.cfg, err_log=self.output()['err_log'].path)
 
 class preprocess(luigi.Task):
 	priority = 90
