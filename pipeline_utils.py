@@ -95,7 +95,8 @@ def cluster_command_call(task, cmd, threads, ram, cfg, err_log=False, refresh_ti
 		with open(job_script_file + jobid, 'r') as f:
 			with open(err_log, 'w') as f2:
 				f2.write(f.read())
-
+	os.remove(task_script_file)
+	os.remove(job_script_file)
 	return (total_time, run_time, queue_time)
 
 def submit_job(cmd, threads, ram, cfg, task_id):
@@ -112,7 +113,7 @@ def submit_job(cmd, threads, ram, cfg, task_id):
 	task_script += '. /root/.profile\n'
 	task_script += 'alias python=/usr/bin/python3.6\n'
 	task_script += 'alias python3=/usr/bin/python3.6\n'
-	task_script += ' '.join(cmd)
+	task_script += cmd
 	sys_task_script_file = os.path.join(cfg['output_dir'], 'task_scripts', '%s.sh' % task_id)
 	confirm_path(sys_task_script_file)
 	docker_task_script_file = os.path.join('/root', 'output', 'task_scripts', '%s.sh' % task_id)
