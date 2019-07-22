@@ -180,7 +180,6 @@ def assign_rg(fastq1, fastq2, case, sample, cfg):
 	else:
 		raise Exception('Fastq header mismatch in read pairs from sample: %s_%s' % (case, sample))
 
-
 # def error_handling(exception):
 # 	global working_files
 # 	print('Current working files at time of interruption:')
