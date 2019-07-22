@@ -91,6 +91,7 @@ def cluster_command_call(task, cmd, threads, ram, cfg, err_log=False, refresh_ti
 			time.sleep(refresh_time)
 		else:
 			done = time.time()
+			task.set_status_message('Job completed in %s mins' % round((done - run_start)/60, 2))
 			break
 	queue_time = round((run_start - queue_start)/60, 2)
 	run_time = round((done - run_start)/60, 2)

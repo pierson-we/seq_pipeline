@@ -63,7 +63,7 @@ class trim(luigi.Task):
 		pipeline_utils.cluster_command_call(self, cmd, threads=1, ram=5, cfg=self.cfg, err_log=self.output()['err_log'].path)
 
 class align(luigi.Task):
-	priority = 100
+	priority = 99
 	cfg = luigi.DictParameter()
 
 	case = luigi.Parameter()
@@ -86,7 +86,7 @@ class align(luigi.Task):
 		pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=12, cfg=self.cfg, err_log=self.output()['err_log'].path)
 
 class merge_bams(luigi.Task):
-	priority = 100
+	priority = 98
 	# resources = {'threads': 1}
 	cfg = luigi.DictParameter()
 
@@ -116,7 +116,7 @@ class merge_bams(luigi.Task):
 
 
 class mark_duplicates(luigi.Task):
-	priority = 90
+	priority = 97
 	cfg = luigi.DictParameter()
 
 	case = luigi.Parameter()
@@ -137,7 +137,7 @@ class mark_duplicates(luigi.Task):
 		pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=5, cfg=self.cfg, err_log=self.output()['err_log'].path)
 
 class index_bam(luigi.Task):
-	priority = 100
+	priority = 96
 	cfg = luigi.DictParameter()
 
 	case = luigi.Parameter()
@@ -158,7 +158,7 @@ class index_bam(luigi.Task):
 		pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=5, cfg=self.cfg, err_log=self.output()['err_log'].path)
 
 class realigner_target(luigi.Task):
-	priority = 90
+	priority = 95
 	cfg = luigi.DictParameter()
 
 	# @property # This is necessary to assign a dynamic value to the 'threads' resource within a task
@@ -193,7 +193,7 @@ class realigner_target(luigi.Task):
 			f.write('\n'.join(file_map))
 
 class indel_realigner(luigi.Task):
-	priority = 90
+	priority = 94
 	cfg = luigi.DictParameter()
 
 	# @property # This is necessary to assign a dynamic value to the 'threads' resource within a task
@@ -230,7 +230,7 @@ class indel_realigner(luigi.Task):
 		# self.input()['realigner_target']['file_map'].remove()
 
 class base_recalibrator(luigi.Task):
-	priority = 90
+	priority = 93
 	cfg = luigi.DictParameter()
 
 	case = luigi.Parameter()
@@ -251,7 +251,7 @@ class base_recalibrator(luigi.Task):
 		pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=12, cfg=self.cfg, err_log=self.output()['err_log'].path)
 
 class apply_bqsr(luigi.Task):
-	priority = 90
+	priority = 92
 	# resources = {'threads': 1}
 	cfg = luigi.DictParameter()
 
@@ -269,7 +269,7 @@ class apply_bqsr(luigi.Task):
 		pipeline_utils.cluster_command_call(self, cmd, threads=1, ram=5, cfg=self.cfg, err_log=self.output()['err_log'].path)
 
 class preprocess(luigi.Task):
-	priority = 90
+	priority = 91
 	# resources = {'threads': 1}
 	cfg = luigi.DictParameter()
 

@@ -6,7 +6,7 @@ import pipeline_utils
 import preprocess
 
 class mutect2_normal(luigi.Task):
-	priority = 80
+	priority = 89
 	cfg = luigi.DictParameter()
 
 	case = luigi.Parameter()
@@ -31,7 +31,7 @@ class mutect2_normal(luigi.Task):
 		pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=16, cfg=self.cfg, err_log=self.output()['err_log'].path)
 
 class mutect2_pon(luigi.Task):
-	priority = 80
+	priority = 88
 	# resources = {'threads': 1}
 	cfg = luigi.DictParameter()
 
@@ -57,7 +57,7 @@ class mutect2_pon(luigi.Task):
 		pipeline_utils.cluster_command_call(self, cmd, threads=1, ram=12, cfg=self.cfg, err_log=self.output()['err_log'].path)
 
 class mutect2(luigi.Task):
-	priority = 80
+	priority = 87
 	cfg = luigi.DictParameter()
 
 	case = luigi.Parameter()
@@ -87,7 +87,7 @@ class mutect2(luigi.Task):
 		pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=16, cfg=self.cfg, err_log=self.output()['err_log'].path)
 
 class lofreq(luigi.Task):
-	priority = 80
+	priority = 87
 	cfg = luigi.DictParameter()
 
 	case = luigi.Parameter()
@@ -125,7 +125,7 @@ class lofreq(luigi.Task):
 		pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=12, cfg=self.cfg, err_log=self.output()['err_log'].path)
 
 class manta(luigi.Task):
-	priority = 80
+	priority = 88
 	cfg = luigi.DictParameter()
 
 	case = luigi.Parameter()
@@ -151,7 +151,7 @@ class manta(luigi.Task):
 		pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=12, cfg=self.cfg, err_log=self.output()['err_log'].path)
 
 class strelka(luigi.Task):
-	priority = 80
+	priority = 87
 	cfg = luigi.DictParameter()
 
 	case = luigi.Parameter()
@@ -177,7 +177,7 @@ class strelka(luigi.Task):
 		pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=12, cfg=self.cfg, err_log=self.output()['err_log'].path)
 
 class scalpel_discovery(luigi.Task):
-	priority = 80
+	priority = 88
 	cfg = luigi.DictParameter()
 
 	case = luigi.Parameter()
@@ -211,7 +211,7 @@ class scalpel_discovery(luigi.Task):
 		pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=16, cfg=self.cfg, err_log=self.output()['err_log'].path)
 
 class scalpel_export(luigi.Task):
-	priority = 80
+	priority = 87
 	# resources = {'threads': 1}
 	cfg = luigi.DictParameter()
 
@@ -239,7 +239,7 @@ class scalpel_export(luigi.Task):
 		pipeline_utils.cluster_command_call(self, cmd, threads=1, ram=5, cfg=self.cfg, err_log=self.output()['err_log'].path)
 
 class variant_calling(luigi.Task):
-	priority = 80
+	priority = 86
 	# resources = {'threads': 1}
 	cfg = luigi.DictParameter()
 
