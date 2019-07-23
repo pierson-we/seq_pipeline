@@ -72,12 +72,15 @@ def piped_command_call(cmds, err_log, output_file=False):
 
 def cluster_command_call(task, cmd, threads, ram, cfg, err_log=False, refresh_time=30):
 	cmd = [str(x) for x in cmd]
-	jobid, task_script_file, job_script_file = submit_job(cmd, threads, ram, cfg, task.task_id)
+	if not err_log:
+		err_log = os.path.join(cfg['output_dir'], 'log_dump', task.task_id + '_err_log.txt')
+	confirm_path(err_log)
+	jobid, task_script_file, job_script_file = submit_job(cmd, threads, ram, cfg, task.task_id, err_log)
 	queue_start = time.time()
 	run_start = 0
 	while True:
 		update_time = time.time()
-		status = get_job_status(jobid)
+		status = get_job_status(jobid, err_log)
 		if status == 'queue':
 			task.set_status_message('In job queue for %s mins' % round((update_time - queue_start)/60, 2))
 			time.sleep(refresh_time)
@@ -96,16 +99,16 @@ def cluster_command_call(task, cmd, threads, ram, cfg, err_log=False, refresh_ti
 	queue_time = round((run_start - queue_start)/60, 2)
 	run_time = round((done - run_start)/60, 2)
 	total_time = round((done - queue_start)/60, 2)
-	if err_log:
-		with open(job_script_file + '.e' + jobid, 'r') as f:
-			with open(err_log, 'w') as f2:
-				f2.write(f.read())
+	# if err_log:
+	# 	with open(job_script_file + '.e' + jobid, 'r') as f:
+	# 		with open(err_log, 'w') as f2:
+	# 			f2.write(f.read())
 	os.remove(task_script_file)
 	for file in glob.glob(job_script_file + '*'):
 		os.remove(file)
 	return (total_time, run_time, queue_time)
 
-def submit_job(cmd, threads, ram, cfg, task_id):
+def submit_job(cmd, threads, ram, cfg, task_id, err_log):
 	cwd = os.getcwd()
 	cmd = ' '.join(cmd)
 	for (sys_path, docker_path) in [(cfg['resources_dir'], '/root/pipeline/resources'), (cfg['code_dir'], '/root/pipeline/code'), (cfg['input_dir'], '/root/input'), (cfg['output_dir'], '/root/output')]:
@@ -120,6 +123,10 @@ def submit_job(cmd, threads, ram, cfg, task_id):
 	task_script += 'alias python=/usr/bin/python3.6\n'
 	task_script += 'alias python3=/usr/bin/python3.6\n'
 	task_script += cmd
+	docker_err_log = err_log.replace(os.path.dirname(cfg['output_dir']), os.path.dirname('/root/output'))
+	tmp_err_log = os.path.join(os.path.dirname(docker_err_log), '__tmp.%s' % docker_err_log.split('/')[-1])
+	task_script += '2> %s\n' % tmp_err_log
+	task_script += 'mv %s %s' % tmp_err_log docker_err_log
 	sys_task_script_file = os.path.join(cfg['output_dir'], 'task_scripts', '%s.sh' % task_id)
 	confirm_path(sys_task_script_file)
 	docker_task_script_file = os.path.join('/root', 'output', 'task_scripts', '%s.sh' % task_id)
@@ -141,19 +148,22 @@ def submit_job(cmd, threads, ram, cfg, task_id):
 	os.chdir(cwd)
 	return jobid, sys_task_script_file, job_script_file
 
-def get_job_status(jobid):
-	p = subprocess.Popen('qstat -alt', stdout=subprocess.PIPE, shell=True)
-	qstat_out = p.stdout.read().decode('utf-8')
-	if jobid in qstat_out:
-		status = qstat_out[qstat_out.find(jobid):].split('\n')[0].split()[-2]
-		if status == 'R':
-			return 'run'
-		elif status == 'Q':
-			return 'queue'
-		else:
-			return 'exiting'
-	else:
+def get_job_status(jobid, err_log):
+	if os.path.isfile(err_log):
 		return 'done'
+	else:
+		p = subprocess.Popen('qstat -alt', stdout=subprocess.PIPE, shell=True)
+		qstat_out = p.stdout.read().decode('utf-8')
+		if jobid in qstat_out:
+			status = qstat_out[qstat_out.find(jobid):].split('\n')[0].split()[-2]
+			if status == 'R':
+				return 'run'
+			elif status == 'Q':
+				return 'queue'
+			else:
+				return 'exiting'
+		else:
+			return 'done'
 
 def assign_rg(fastq1, fastq2, case, sample, cfg):
 	import gzip
