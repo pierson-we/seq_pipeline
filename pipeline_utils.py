@@ -125,7 +125,7 @@ def submit_job(cmd, threads, ram, cfg, task_id, err_log):
 	task_script += cmd
 	docker_err_log = err_log.replace(os.path.dirname(cfg['output_dir']), os.path.dirname('/root/output'))
 	tmp_err_log = os.path.join(os.path.dirname(docker_err_log), '__tmp.%s' % docker_err_log.split('/')[-1])
-	task_script += '2> %s\n' % tmp_err_log
+	task_script += ' 2> %s\n' % tmp_err_log
 	task_script += 'mv %s %s' % (tmp_err_log, docker_err_log)
 	sys_task_script_file = os.path.join(cfg['output_dir'], 'task_scripts', '%s.sh' % task_id)
 	confirm_path(sys_task_script_file)
