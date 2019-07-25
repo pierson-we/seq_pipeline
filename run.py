@@ -39,7 +39,7 @@ def run_pipeline(args):
 	worker_scheduler_factory = luigi.interface._WorkerSchedulerFactory()
 	# luigi.interface.core.threads = luigi.parameter.IntParameter(default=args.max_threads, description='total number of threads available for use by the pipeline', config_path=dict(section='resources', name='threads'),)
 
-	luigi.build([cases(sample_dict=sample_dict, project_dir=args.project_dir, global_max_threads=args.max_threads, max_threads=sample_threads, input_dir=args.sample_dir, cwd=os.getcwd())], workers=args.workers, local_scheduler=args.local_scheduler, worker_scheduler_factory=worker_scheduler_factory) # , workers=args.workers #, scheduler_port=int(args.port)) # workers=sample_threads , resources={'threads': args.max_threads}
+	luigi.build([cases(sample_dict=sample_dict, project_dir=args.project_dir, global_max_threads=args.max_threads, max_threads=sample_threads, input_dir=args.sample_dir, cwd=os.getcwd(), cluster_exec=args.cluster_exec)], workers=args.workers, local_scheduler=args.local_scheduler, worker_scheduler_factory=worker_scheduler_factory) # , workers=args.workers #, scheduler_port=int(args.port)) # workers=sample_threads , resources={'threads': args.max_threads}
 
 class cases(luigi.Task):
 	# generated parameters
