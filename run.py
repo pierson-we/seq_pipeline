@@ -49,6 +49,7 @@ class cases(luigi.Task):
 	max_threads = luigi.IntParameter()
 	input_dir = luigi.Parameter()
 	cwd = luigi.Parameter()
+	cluster_exec = luigi.Parameter()
 
 	# cfg parameters
 	resources_dir = luigi.Parameter()
@@ -109,6 +110,7 @@ class cases(luigi.Task):
 			'platform': self.platform,
 			'library': self.library,
 			'library_bed': self.library_bed,
+			'cluster_exec': self.cluster_exec,
 			# 'library_bed': self.library_bed,
 			# 'gatk4_location': self.gatk4_location,
 			# 'gatk3_location': self.gatk3_location,
@@ -160,6 +162,7 @@ class cases(luigi.Task):
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='wes pipeline parser')
+	parser.add_argument('-C', '--cluster', action='store_true', dest='cluster_exec', default=False, help='Cluster execution mode (qsub task execution)')
 	parser.add_argument('-O', action='store', dest='project_dir', default=os.getcwd(), help='Directory in which the program will create an "output" directory containing all output files.')
 	parser.add_argument('-I', action='store', dest='sample_dir', help='Directory containing the input fastq files. Directory contents must be structured as follows:\n[sample_dir]\n\t[sample_name]\n\t\ttumor\n\t\t\t[tumor].fastq.gz\n\t\tnormal\n\t\t\t[normal].fastq.gz')
 	parser.add_argument('-t', '--threads', action='store', dest='max_threads', default=4, type=int, help='The maximum number of threads available for use. The program will attempt to distribute available threads amongst samples as efficiently and equally as possible.')
