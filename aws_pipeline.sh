@@ -1,3 +1,4 @@
+#!/bin/bash
 . /root/.profile
 cd /root
 alias python=/usr/bin/python3.6
