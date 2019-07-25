@@ -74,6 +74,8 @@ def cluster_command_call(task, cmd, threads, ram, cfg, err_log=False, refresh_ti
 	cmd = [str(x) for x in cmd]
 	if not err_log:
 		err_log = os.path.join(cfg['output_dir'], 'log_dump', task.task_id + '_err_log.txt')
+	if os.path.isfile(err_log):
+		os.remove(err_log)
 	confirm_path(err_log)
 	jobid, task_script_file, job_script_file = submit_job(cmd, threads, ram, cfg, task.task_id, err_log)
 	queue_start = time.time()
