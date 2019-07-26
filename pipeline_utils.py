@@ -32,7 +32,7 @@ def command_call(cmd, err_log=False):
 		p = subprocess.Popen(' '.join(cmd), shell=True)
 		p.communicate()
 	else:
-		tmp_err_log = os.path.join(os.path.dirname(err_log), '_tmp.%s' % tmp_err_log.split('/')[-1])
+		tmp_err_log = os.path.join(os.path.dirname(err_log), '_tmp.%s' % err_log.split('/')[-1])
 		confirm_path(tmp_err_log)
 		with subprocess.Popen(' '.join(cmd), shell=True, stderr=subprocess.PIPE) as proc:
 			with open(tmp_err_log, 'wb') as log:
@@ -64,7 +64,7 @@ def piped_command_call(cmds, err_log, output_file=False):
 
 	processes[0].stdout.close()
 	
-	tmp_err_log = os.path.join(os.path.dirname(err_log), '_tmp.%s' % tmp_err_log.split('/')[-1])
+	tmp_err_log = os.path.join(os.path.dirname(err_log), '_tmp.%s' % err_log.split('/')[-1])
 
 	with open(tmp_err_log, 'wb') as f:
 		f.write(processes[-1].communicate()[1])
