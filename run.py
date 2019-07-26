@@ -3,16 +3,16 @@ import sys
 import argparse
 import subprocess
 import time
-import luigi
 # from code import pipeline_utils, global_vars
-import pipeline_utils
-import preprocess
-import snv_indel
 
 def run_pipeline(args):
 	# import variant_analysis
 	sys.path.append(os.getcwd())
 	sys.path.append('./')
+	import luigi
+	import pipeline_utils
+	import preprocess
+	import snv_indel
 	
 	# timestamp = str(int(time.time()))
 	sample_dict = {}
