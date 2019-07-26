@@ -184,8 +184,8 @@ if __name__ == '__main__':
 
 	run_pipeline(args)
 
-	with open(os.getenv('LUIGI_CONFIG_PATH'), 'w') as f:
-		f.write('['.join(config))
+	# with open(os.getenv('LUIGI_CONFIG_PATH'), 'w') as f:
+	# 	f.write('['.join(config))
 	# luigi.build([bam_processing.cases(max_threads=args.max_threads, project_dir=args.project_dir, sample_dir=args.sample_dir, threads_per_sample=args.threads_per_sample, timestamp=timestamp)], workers=args.workers, local_scheduler=args.local_scheduler)
 
 	# luigi.build([bowtie(fastq_path=fastq_path, sam_path=sam_path, threads=threads, fasta_path=fasta_path), convert_bam(sam_path=sam_path, bam_path=bam_path)], workers=1, local_scheduler=False)

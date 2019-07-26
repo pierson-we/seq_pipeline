@@ -6,5 +6,5 @@ alias python3=/usr/bin/python3.6
 export LUIGI_CONFIG_PATH=/root/seq_pipeline/luigi.cfg
 echo $LUIGI_CONFIG_PATH
 python3.6 ./seq_pipeline/add_resources.py 96
-cat ./seq_pipeline/luigi.cfg
+# cat ./seq_pipeline/luigi.cfg
 python3.6 ./seq_pipeline/run.py "$@"
