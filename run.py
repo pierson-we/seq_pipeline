@@ -49,7 +49,7 @@ class cases(luigi.Task):
 	max_threads = luigi.IntParameter()
 	input_dir = luigi.Parameter()
 	cwd = luigi.Parameter()
-	cluster_exec = luigi.Parameter()
+	cluster_exec = luigi.BoolParameter()
 
 	# cfg parameters
 	resources_dir = luigi.Parameter()
