@@ -25,7 +25,7 @@ SEQ_PIPELINE_DIR=~/seq_pipeline
 THREADS=96
 SAMPLE_THREADS=6
 WORKERS=50
-LOCAL_SCHEDULER="-l"
+LOCAL_SCHEDULER=
 
 cd ~/seq_pipeline
 rm -rf luigi.cfg || true
