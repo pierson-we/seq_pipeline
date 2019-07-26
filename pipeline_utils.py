@@ -73,7 +73,7 @@ def piped_command_call(cmds, err_log, output_file=False):
 		p = subprocess.Popen(' '.join(cmds[-1]), stdin=processes[-1].stdout, stdout=subprocess.PIPE, stderr=tmp_err_files[-1], shell=True)
 		processes.append(p)
 
-	for proc in processes[:-1]
+	for proc in processes[:-1]:
 		proc.stdout.close()
 
 	outs, errs = processes[-1].communicate()
