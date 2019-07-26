@@ -98,8 +98,10 @@ class align(luigi.Task):
 			cmd = ['bwa', 'mem', '-M', '-t', self.cfg['max_threads'], '-R', "'%s'" % read_group, self.cfg['fasta_file'], self.input()['trim']['trimgalore'][0].path, self.input()['trim']['trimgalore'][1].path, '|', 'samtools', 'view', '-bh', '|', 'samtools', 'sort', '-o', self.output()['bwa_mem'].path]
 			pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=8, cfg=self.cfg, err_log=self.output()['err_log'].path)
 		else:
-			cmds = [['bwa', 'mem', '-M', '-t', self.cfg['max_threads'], '-R', "'%s'" % read_group, self.cfg['fasta_file'], self.input()['trim']['trimgalore'][0].path, self.input()['trim']['trimgalore'][1].path], ['samtools', 'view', '-bh', ], ['samtools', 'sort', '-o', self.output()['bwa_mem'].path]]
-			pipeline_utils.piped_command_call(cmds, err_log=self.output()['err_log'].path)
+			# cmds = [['bwa', 'mem', '-M', '-t', self.cfg['max_threads'], '-R', "'%s'" % read_group, self.cfg['fasta_file'], self.input()['trim']['trimgalore'][0].path, self.input()['trim']['trimgalore'][1].path], ['samtools', 'view', '-bh', ], ['samtools', 'sort', '-o', self.output()['bwa_mem'].path]]
+			cmd = ['bwa', 'mem', '-M', '-t', self.cfg['max_threads'], '-R', "'%s'" % read_group, self.cfg['fasta_file'], self.input()['trim']['trimgalore'][0].path, self.input()['trim']['trimgalore'][1].path, '|', 'samtools', 'view', '-bh', '|', 'samtools', 'sort', '-o', self.output()['bwa_mem'].path]
+			# pipeline_utils.piped_command_call(cmds, err_log=self.output()['err_log'].path)
+			pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
 
 class merge_bams(luigi.Task):
 	priority = 98

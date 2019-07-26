@@ -28,6 +28,7 @@ def command_call(cmd, err_log=False):
 	cmd = [str(x) for x in cmd]
 	sys.stdout.flush()
 	print('\n' + ' '.join(cmd))
+	sys.stdout.flush()
 	if not err_log:
 		p = subprocess.Popen(' '.join(cmd), shell=True)
 		p.communicate()
@@ -36,9 +37,11 @@ def command_call(cmd, err_log=False):
 		confirm_path(tmp_err_log)
 		with subprocess.Popen(' '.join(cmd), shell=True, stderr=subprocess.PIPE) as proc:
 			with open(tmp_err_log, 'wb') as log:
-				log.write(proc.stderr.read())
+				outs, errs = proc.communicate()
+				log.write(errs)
 	end = time.time()
 	print('Command completed in %s minutes\n' % round((end-start)/60, 2))
+	sys.stdout.flush()
 	if err_log:
 		with open(tmp_err_log, 'a') as f:
 			f.write('\n\n***\nCommand completed in %s minutes\n***' % round((end-start)/60, 2))
@@ -48,32 +51,45 @@ def piped_command_call(cmds, err_log, output_file=False):
 	start = time.time()
 	cmds = [[str(x) for x in cmd] for cmd in cmds]
 	print('\n' + ' '.join(cmds[0]))
-	processes = [subprocess.Popen(' '.join(cmds[0]), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)]
+	sys.stdout.flush()
+	tmp_err_files = [open(os.path.join(os.path.dirname(err_log), '%s_tmp.%s' % (str(i), err_log.split('/')[-1])), 'wb') for i in range(len(cmds))]
+	processes = [subprocess.Popen(' '.join(cmds[0]), stdout=subprocess.PIPE, stderr=tmp_err_files[0], shell=True)]
 	for i, cmd in enumerate(cmds[1:-1]):
 		print(' '.join(cmd))
-		p = subprocess.Popen(' '.join(cmd), stdin=processes[-1].stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+		tmp_err_log_count += 1
+		tmp_err_log = os.path.join(os.path.dirname(err_log), '%s_tmp.%s' % (str(tmp_err_log_coung), err_log.split('/')[-1]))
+		p = subprocess.Popen(' '.join(cmd), stdin=processes[-1].stdout, stdout=subprocess.PIPE, stderr=tmp_err_files[i+1], shell=True)
 		processes.append(p)
 	if output_file:
 		print(' '.join(cmds[-1]))
-		p = subprocess.Popen(' '.join(cmds[-1]), stdin=processes[-1].stdout, stdout=output_file, stderr=subprocess.PIPE, shell=True)
+		tmp_err_log_count += 1
+		tmp_err_log = os.path.join(os.path.dirname(err_log), '%s_tmp.%s' % (str(tmp_err_log_coung), err_log.split('/')[-1]))
+		p = subprocess.Popen(' '.join(cmds[-1]), stdin=processes[-1].stdout, stdout=output_file, stderr=tmp_err_files[-1], shell=True)
 		processes.append(p)
 	else:
 		print(' '.join(cmds[-1]))
-		p = subprocess.Popen(' '.join(cmds[-1]), stdin=processes[-1].stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+		tmp_err_log_count += 1
+		tmp_err_log = os.path.join(os.path.dirname(err_log), '%s_tmp.%s' % (str(tmp_err_log_coung), err_log.split('/')[-1]))
+		p = subprocess.Popen(' '.join(cmds[-1]), stdin=processes[-1].stdout, stdout=subprocess.PIPE, stderr=tmp_err_files[-1], shell=True)
 		processes.append(p)
 
-	processes[0].stdout.close()
-	
-	tmp_err_log = os.path.join(os.path.dirname(err_log), '_tmp.%s' % err_log.split('/')[-1])
+	for proc in processes[:-1]
+		proc.stdout.close()
 
-	with open(tmp_err_log, 'wb') as f:
-		f.write(processes[-1].communicate()[1])
+	outs, errs = processes[-1].communicate()
 
 	end = time.time()
 	print('Command completed in %s minutes\n' % round((end-start)/60, 2))
-	with open(tmp_err_log, 'a') as f:
+	sys.stdout.flush()
+	for file in tmp_err_files:
+		file.close()
+	with open(err_log, 'w') as f:
+		for file in [os.path.join(os.path.dirname(err_log), '%s_tmp.%s' % (str(i), err_log.split('/')[-1])) for i in range(len(cmds))]:
+			with open(file, 'r') as f_tmp:
+				f.write(f_tmp.read())
+				f.write('\n')
+			os.remove(file)
 		f.write('\n\n***\nCommand completed in %s minutes\n***' % round((end-start)/60, 2))
-	os.rename(tmp_err_log, err_log)
 
 def cluster_command_call(task, cmd, threads, ram, cfg, err_log=False, refresh_time=30):
 	cmd = [str(x) for x in cmd]
