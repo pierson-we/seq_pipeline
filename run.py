@@ -4,15 +4,15 @@ import argparse
 import subprocess
 import time
 # from code import pipeline_utils, global_vars
+import luigi
+import pipeline_utils
+import preprocess
+import snv_indel
 
 def run_pipeline(args):
 	# import variant_analysis
 	sys.path.append(os.getcwd())
 	sys.path.append('./')
-	import luigi
-	import pipeline_utils
-	import preprocess
-	import snv_indel
 	
 	# timestamp = str(int(time.time()))
 	sample_dict = {}
@@ -181,19 +181,6 @@ if __name__ == '__main__':
 	parser.add_argument('-p', '--port', action='store', dest='port', default='8082', help='If using the central luigi scheduler, use this parameter to specify a custom port for the luigi server to operate on (defaults to 8082)')
 
 	args = parser.parse_args()
-	
-	with open(os.getenv('LUIGI_CONFIG_PATH'), 'r') as f:
-		config = f.read().split('[')
-	new_config = []
-	for section in config:
-		if not section.startswith('resources]'):
-			new_config.append(section)
-	new_config = '['.join(new_config)
-	while not new_config.endswith('\n\n'):
-		new_config += '\n'
-	new_config += '[resources]\nthreads=%s' % str(args.max_threads)
-	with open(os.getenv('LUIGI_CONFIG_PATH'), 'w') as f:
-		f.write(new_config)
 
 	run_pipeline(args)
 
