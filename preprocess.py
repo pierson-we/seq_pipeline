@@ -122,7 +122,7 @@ class merge_bams(luigi.Task):
 
 	def run(self):
 		if len(self.input()) > 1:
-			cmd = ['java', '--java-options', '-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], '-jar', '$PICARD', 'MergeSamFiles', 'O=%s' % self.output()['merge_bams'].path]
+			cmd = ['java', '--java-options', '""-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], '-jar', '$PICARD', 'MergeSamFiles', 'O=%s' % self.output()['merge_bams'].path]
 			for lane in self.input():
 				cmd += ['I=%s' % self.input()[lane]['align']['bwa_mem'].path]
 			if self.cfg['cluster_exec']:
@@ -154,7 +154,7 @@ class mark_duplicates(luigi.Task):
 		return {'mark_duplicates': {'bam': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'preprocess', '%s_%s_marked_duplicates.bam' % (self.case, self.sample))), 'metrics': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'preprocess', '%s_%s_marked_dup_metrics.txt' % (self.case, self.sample)))}, 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_%s_mark_duplicates_err.txt' % (self.case, self.sample)))}
 
 	def run(self):
-		cmd = ['java', '--java-options', '-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], '-jar', '$PICARD', 'MarkDuplicates', 'I=%s' % self.input()['merge_bams']['merge_bams'].path, 'O=%s' % self.output()['mark_duplicates']['bam'].path, 'M=%s' % self.output()['mark_duplicates']['metrics'].path, 'TAGGING_POLICY=All']
+		cmd = ['java', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], '-jar', '$PICARD', 'MarkDuplicates', 'I=%s' % self.input()['merge_bams']['merge_bams'].path, 'O=%s' % self.output()['mark_duplicates']['bam'].path, 'M=%s' % self.output()['mark_duplicates']['metrics'].path, 'TAGGING_POLICY=All']
 		if self.cfg['cluster_exec']:
 			pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=5, cfg=self.cfg, err_log=self.output()['err_log'].path)
 		else:
@@ -206,7 +206,7 @@ class realigner_target(luigi.Task):
 		# return {'realigner_target': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'preprocess', '%s_%s_realigner_targets.intervals' % (self.case, self.sample))), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_%s_realigner_target_err.txt' % (self.case, self.sample)))}
 		return {'realigner_target': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], 'all_samples', 'preprocess', 'all_samples_realigner_targets.intervals')), 'file_map': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], 'all_samples', 'preprocess', 'all_samples_realigner.map')), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], 'all_samples', 'log', 'realigner_target_err.txt'))}
 	def run(self):
-		cmd = ['java', '--java-options', '-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], '-jar', '$GATK3', '-T', 'RealignerTargetCreator', '-R', self.cfg['fasta_file'], '--known', self.cfg['germline_indels'], '-nct', str(int(self.cfg['global_max_threads']/4)), '-nt', '4', '-o', self.output()['realigner_target'].path]
+		cmd = ['java', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], '-jar', '$GATK3', '-T', 'RealignerTargetCreator', '-R', self.cfg['fasta_file'], '--known', self.cfg['germline_indels'], '-nct', str(int(self.cfg['global_max_threads']/4)), '-nt', '4', '-o', self.output()['realigner_target'].path]
 		file_map = []
 		for case in self.input():
 			for sample in self.input()[case]:
@@ -251,7 +251,7 @@ class indel_realigner(luigi.Task):
 		return outputs
 
 	def run(self):
-		cmd = ['java', '--java-options', '-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], '-jar', '$GATK3', '-T', 'IndelRealigner', '-R', self.cfg['fasta_file'], '--nWayOut', self.input()['realigner_target']['file_map'].path, '-known', self.cfg['germline_indels'], '--consensusDeterminationModel', 'USE_SW', '-nct', str(int(self.cfg['global_max_threads']/4)), '-nt', '4', '--targetIntervals', self.input()['realigner_target']['realigner_target'].path]
+		cmd = ['java', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], '-jar', '$GATK3', '-T', 'IndelRealigner', '-R', self.cfg['fasta_file'], '--nWayOut', self.input()['realigner_target']['file_map'].path, '-known', self.cfg['germline_indels'], '--consensusDeterminationModel', 'USE_SW', '-nct', str(int(self.cfg['global_max_threads']/4)), '-nt', '4', '--targetIntervals', self.input()['realigner_target']['realigner_target'].path]
 		for case in self.input()['cases']:
 			for sample in self.input()['cases'][case]:
 				filename = self.input()['cases'][case][sample]['mark_duplicates']['mark_duplicates']['bam'].path
@@ -280,7 +280,7 @@ class base_recalibrator(luigi.Task):
 		return {'base_recalibrator': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'preprocess', '%s_%s_recal_data.table' % (self.case, self.sample))), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_%s_base_recalibrator_err.txt' % (self.case, self.sample)))}
 
 	def run(self):
-		cmd = ['java', '--java-options', '-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], '-jar', '$GATK3', '-T', 'BaseRecalibrator', '-I', self.input()['indel_realigner']['indel_realigner'][self.case][self.sample].path, '-R', self.cfg['fasta_file'], '-knownSites', self.cfg['germline_all'], '-nct', self.cfg['max_threads'], '-o', self.output()['base_recalibrator'].path]
+		cmd = ['java', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], '-jar', '$GATK3', '-T', 'BaseRecalibrator', '-I', self.input()['indel_realigner']['indel_realigner'][self.case][self.sample].path, '-R', self.cfg['fasta_file'], '-knownSites', self.cfg['germline_all'], '-nct', self.cfg['max_threads'], '-o', self.output()['base_recalibrator'].path]
 		if self.cfg['cluster_exec']:
 			pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=12, cfg=self.cfg, err_log=self.output()['err_log'].path)
 		else:
@@ -301,7 +301,7 @@ class apply_bqsr(luigi.Task):
 		return {'apply_bqsr': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'preprocess', '%s_%s_recalibrated.bam' % (self.case, self.sample))), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_%s_apply_bqsr_err.txt' % (self.case, self.sample)))}
 
 	def run(self):
-		cmd = ['java', '--java-options', '-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], '-jar', '$GATK3', '-T', 'PrintReads', '-I', self.input()['indel_realigner']['indel_realigner'][self.case][self.sample].path, '-R', self.cfg['fasta_file'], '-BQSR', self.input()['base_recalibrator']['base_recalibrator'].path, '-o', self.output()['apply_bqsr'].path]
+		cmd = ['java', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], '-jar', '$GATK3', '-T', 'PrintReads', '-I', self.input()['indel_realigner']['indel_realigner'][self.case][self.sample].path, '-R', self.cfg['fasta_file'], '-BQSR', self.input()['base_recalibrator']['base_recalibrator'].path, '-o', self.output()['apply_bqsr'].path]
 		if self.cfg['cluster_exec']:
 			pipeline_utils.cluster_command_call(self, cmd, threads=1, ram=5, cfg=self.cfg, err_log=self.output()['err_log'].path)
 		else:
