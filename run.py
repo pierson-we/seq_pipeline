@@ -145,7 +145,7 @@ class cases(luigi.Task):
 			# 'pindel_max_inv_length': self.pindel_max_inv_length,
 			# 'genmap': self.genmap,
 			# 'exons_bed': self.exons_bed,
-			'tmp_dir': os.path.join(self.project_dir, 'tmp')
+			'tmp_dir': os.path.join(self.project_dir, 'output', 'tmp')
 		}
 		pipeline_utils.confirm_path(cfg['tmp_dir'])
 		pipeline_utils.confirm_path(cfg['output_dir'])

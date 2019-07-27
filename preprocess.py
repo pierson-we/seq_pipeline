@@ -131,21 +131,22 @@ class merge_bams(luigi.Task):
 				pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
 		else:
 			for lane in self.input():
-				shutil.move(self.input()[lane]['align']['bwa_mem'].path, self.output()['merge_bams'].path)
+				shutil.copyfile(self.input()[lane]['align']['bwa_mem'].path, self.output()['merge_bams'].path)
 			with open(self.output()['err_log'].path, 'w') as f:
 				f.write('')
 
 
 class mark_duplicates(luigi.Task):
 	priority = 97
+	resources = {'threads': 1}
 	cfg = luigi.DictParameter()
 
 	case = luigi.Parameter()
 	sample = luigi.Parameter()
 
-	@property # This is necessary to assign a dynamic value to the 'threads' resource within a task
-	def resources(self):
-		return {'threads': self.cfg['max_threads']}
+	# @property # This is necessary to assign a dynamic value to the 'threads' resource within a task
+	# def resources(self):
+	# 	return {'threads': self.cfg['max_threads']}
 
 	def requires(self):
 		return {'merge_bams': merge_bams(case=self.case, sample=self.sample, cfg=self.cfg)}
@@ -162,14 +163,15 @@ class mark_duplicates(luigi.Task):
 
 class index_bam(luigi.Task):
 	priority = 96
+	resources = {'threads': 1}
 	cfg = luigi.DictParameter()
 
 	case = luigi.Parameter()
 	sample = luigi.Parameter()
 
-	@property # This is necessary to assign a dynamic value to the 'threads' resource within a task
-	def resources(self):
-		return {'threads': self.cfg['max_threads']}
+	# @property # This is necessary to assign a dynamic value to the 'threads' resource within a task
+	# def resources(self):
+	# 	return {'threads': self.cfg['max_threads']}
 
 	def requires(self):
 		return {'mark_duplicates': mark_duplicates(case=self.case, sample=self.sample, cfg=self.cfg)}
@@ -180,7 +182,7 @@ class index_bam(luigi.Task):
 	def run(self):
 		cmd = ['samtools', 'index', self.input()['mark_duplicates']['mark_duplicates']['bam'].path]
 		if self.cfg['cluster_exec']:
-			pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=5, cfg=self.cfg, err_log=self.output()['err_log'].path)
+			pipeline_utils.cluster_command_call(self, cmd, threads=1, ram=5, cfg=self.cfg, err_log=self.output()['err_log'].path)
 		else:
 			pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
 
