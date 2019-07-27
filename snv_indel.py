@@ -27,7 +27,7 @@ class mutect2_normal(luigi.Task):
 		return outputs
 
 	def run(self):
-		cmd = ['gatk4', 'Mutect2', '-R', self.cfg['fasta_file'], '--native-pair-hmm-threads', self.cfg['max_threads'], '-I', self.input()['preprocess']['bam'].path, '-O', self.output()['mutect2_normal'].path]
+		cmd = ['gatk4', '--java-options', '-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], 'Mutect2', '-R', self.cfg['fasta_file'], '--native-pair-hmm-threads', self.cfg['max_threads'], '-I', self.input()['preprocess']['bam'].path, '-O', self.output()['mutect2_normal'].path]
 		if self.cfg['cluster_exec']:
 			pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=16, cfg=self.cfg, err_log=self.output()['err_log'].path)
 		else:
@@ -54,7 +54,7 @@ class mutect2_pon(luigi.Task):
 
 
 	def run(self):
-		cmd = ['gatk4', 'CreateSomaticPanelOfNormals', '-R', self.cfg['fasta_file'], '-O', self.output()['mutect2_pon'].path]
+		cmd = ['gatk4', '--java-options', '-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], 'CreateSomaticPanelOfNormals', '-R', self.cfg['fasta_file'], '-O', self.output()['mutect2_pon'].path]
 		for case in self.input():
 			cmd += ['-vcfs', self.input()[case]['mutect2_normal']['mutect2_normal'].path]
 		if self.cfg['cluster_exec']:
@@ -87,7 +87,7 @@ class mutect2(luigi.Task):
 		return outputs
 
 	def run(self):
-		cmd = ['gatk4', 'Mutect2', '-R', self.cfg['fasta_file'], '--native-pair-hmm-threads', self.cfg['max_threads'], '--germline-resource', self.cfg['gnomad'], '--panel-of-normals', self.input()['mutect2_pon']['mutect2_pon'].path, '-I', self.input()['T']['preprocess']['bam'].path, '-O', self.output()['mutect2'].path]
+		cmd = ['gatk4', '--java-options', '-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], 'Mutect2', '-R', self.cfg['fasta_file'], '--native-pair-hmm-threads', self.cfg['max_threads'], '--germline-resource', self.cfg['gnomad'], '--panel-of-normals', self.input()['mutect2_pon']['mutect2_pon'].path, '-I', self.input()['T']['preprocess']['bam'].path, '-O', self.output()['mutect2'].path]
 		if 'N' in self.cfg['cases'][self.case]:
 			cmd += ['-I', self.input()['T']['preprocess']['bam'].path, '-normal', '%s_N' % self.case]
 		if self.cfg['cluster_exec']:

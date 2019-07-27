@@ -35,10 +35,10 @@ def command_call(cmd, err_log=False):
 	else:
 		tmp_err_log = os.path.join(os.path.dirname(err_log), '_tmp.%s' % err_log.split('/')[-1])
 		confirm_path(tmp_err_log)
-		with subprocess.Popen(' '.join(cmd), shell=True, stderr=subprocess.PIPE) as proc:
-			with open(tmp_err_log, 'wb') as log:
+		with open(tmp_err_log, 'wb') as log:
+			with subprocess.Popen(' '.join(cmd), shell=True, stderr=log) as proc:
 				outs, errs = proc.communicate()
-				log.write(errs)
+				# log.write(errs)
 	end = time.time()
 	print('Command completed in %s minutes\n' % round((end-start)/60, 2))
 	sys.stdout.flush()
