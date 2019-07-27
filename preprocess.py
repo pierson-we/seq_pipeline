@@ -122,7 +122,7 @@ class merge_bams(luigi.Task):
 
 	def run(self):
 		if len(self.input()) > 1:
-			cmd = ['java', '--java-options', '""-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], '-jar', '$PICARD', 'MergeSamFiles', 'O=%s' % self.output()['merge_bams'].path]
+			cmd = ['java', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], '-jar', '$PICARD', 'MergeSamFiles', 'O=%s' % self.output()['merge_bams'].path]
 			for lane in self.input():
 				cmd += ['I=%s' % self.input()[lane]['align']['bwa_mem'].path]
 			if self.cfg['cluster_exec']:
