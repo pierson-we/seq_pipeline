@@ -208,7 +208,7 @@ class realigner_target(luigi.Task):
 		# return {'realigner_target': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'preprocess', '%s_%s_realigner_targets.intervals' % (self.case, self.sample))), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_%s_realigner_target_err.txt' % (self.case, self.sample)))}
 		return {'realigner_target': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], 'all_samples', 'preprocess', 'all_samples_realigner_targets.intervals')), 'file_map': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], 'all_samples', 'preprocess', 'all_samples_realigner.map')), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], 'all_samples', 'log', 'realigner_target_err.txt'))}
 	def run(self):
-		cmd = ['java', '-Djava.io.tmpdir=%s' % self.cfg['tmp_dir'], '-jar', '$GATK3', '-T', 'RealignerTargetCreator', '-R', self.cfg['fasta_file'], '--known', self.cfg['germline_indels'], '-nt', self.cfg['global_max_threads'], '-o', self.output()['realigner_target'].path] # , '-nct', str(int(self.cfg['global_max_threads']/4))
+		cmd = ['java', '-Djava.io.tmpdir=%s' % self.cfg['tmp_dir'], '-jar', '$GATK3', '-T', 'RealignerTargetCreator', '-R', self.cfg['fasta_file'], '--known', self.cfg['germline_indels'], '-nt', self.cfg['global_max_threads'], '-o', self.output()['realigner_target'].path]
 		file_map = []
 		for case in self.input():
 			for sample in self.input()[case]:
@@ -253,7 +253,7 @@ class indel_realigner(luigi.Task):
 		return outputs
 
 	def run(self):
-		cmd = ['java', '-Djava.io.tmpdir=%s' % self.cfg['tmp_dir'], '-jar', '$GATK3', '-T', 'IndelRealigner', '-R', self.cfg['fasta_file'], '--nWayOut', self.input()['realigner_target']['file_map'].path, '-known', self.cfg['germline_indels'], '--consensusDeterminationModel', 'USE_SW', '-nct', str(int(self.cfg['global_max_threads']/4)), '-nt', '4', '--targetIntervals', self.input()['realigner_target']['realigner_target'].path]
+		cmd = ['java', '-Djava.io.tmpdir=%s' % self.cfg['tmp_dir'], '-jar', '$GATK3', '-T', 'IndelRealigner', '-R', self.cfg['fasta_file'], '--nWayOut', self.input()['realigner_target']['file_map'].path, '-known', self.cfg['germline_indels'], '--consensusDeterminationModel', 'USE_SW', '-nct', self.cfg['global_max_threads'], '--targetIntervals', self.input()['realigner_target']['realigner_target'].path]
 		for case in self.input()['cases']:
 			for sample in self.input()['cases'][case]:
 				filename = self.input()['cases'][case][sample]['mark_duplicates']['mark_duplicates']['bam'].path
