@@ -277,13 +277,14 @@ class base_recalibrator(luigi.Task):
 		return {'threads': self.cfg['max_threads']}
 
 	def requires(self):
-		return {'indel_realigner': indel_realigner(cfg=self.cfg)}
+		# return {'indel_realigner': indel_realigner(cfg=self.cfg)}
+		return {'mark_duplicates': mark_duplicates(case=self.case, sample=self.sample, cfg=self.cfg), 'index_bam': index_bam(case=self.case, sample=self.sample, cfg=self.cfg)}
 
 	def output(self):
 		return {'base_recalibrator': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'preprocess', '%s_%s_recal_data.table' % (self.case, self.sample))), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_%s_base_recalibrator_err.txt' % (self.case, self.sample)))}
 
 	def run(self):
-		cmd = ['java', '-Djava.io.tmpdir=%s' % self.cfg['tmp_dir'], '-jar', '$GATK3', '-T', 'BaseRecalibrator', '-I', self.input()['indel_realigner']['indel_realigner'][self.case][self.sample].path, '-R', self.cfg['fasta_file'], '-knownSites', self.cfg['germline_all'], '-nct', self.cfg['max_threads'], '-o', self.output()['base_recalibrator'].path]
+		cmd = ['java', '-Djava.io.tmpdir=%s' % self.cfg['tmp_dir'], '-jar', '$GATK3', '-T', 'BaseRecalibrator', '-I', self.input()['mark_duplicates']['mark_duplicates']['bam'].path, '-R', self.cfg['fasta_file'], '-knownSites', self.cfg['germline_all'], '-nct', self.cfg['max_threads'], '-o', self.output()['base_recalibrator'].path] # self.input()['indel_realigner']['indel_realigner'][self.case][self.sample].path
 		if self.cfg['cluster_exec']:
 			pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=12, cfg=self.cfg, err_log=self.output()['err_log'].path)
 		else:
