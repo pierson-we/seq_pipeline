@@ -226,11 +226,12 @@ class realigner_target(luigi.Task):
 
 class indel_realigner(luigi.Task):
 	priority = 94
+	resources = {'threads': 1}
 	cfg = luigi.DictParameter()
 
-	@property # This is necessary to assign a dynamic value to the 'threads' resource within a task
-	def resources(self):
-		return {'threads': self.cfg['global_max_threads']}
+	# @property # This is necessary to assign a dynamic value to the 'threads' resource within a task
+	# def resources(self):
+	# 	return {'threads': self.cfg['global_max_threads']}
 
 	def requires(self):
 		requirements = {'realigner_target': realigner_target(cfg=self.cfg), 'cases': {}}
@@ -253,7 +254,7 @@ class indel_realigner(luigi.Task):
 		return outputs
 
 	def run(self):
-		cmd = ['java', '-Djava.io.tmpdir=%s' % self.cfg['tmp_dir'], '-jar', '$GATK3', '-T', 'IndelRealigner', '-R', self.cfg['fasta_file'], '--nWayOut', self.input()['realigner_target']['file_map'].path, '-known', self.cfg['germline_indels'], '--consensusDeterminationModel', 'USE_SW', '-nct', self.cfg['global_max_threads'], '--targetIntervals', self.input()['realigner_target']['realigner_target'].path]
+		cmd = ['java', '-Djava.io.tmpdir=%s' % self.cfg['tmp_dir'], '-jar', '$GATK3', '-T', 'IndelRealigner', '-R', self.cfg['fasta_file'], '--nWayOut', self.input()['realigner_target']['file_map'].path, '-known', self.cfg['germline_indels'], '--consensusDeterminationModel', 'USE_SW', '--targetIntervals', self.input()['realigner_target']['realigner_target'].path]
 		for case in self.input()['cases']:
 			for sample in self.input()['cases'][case]:
 				filename = self.input()['cases'][case][sample]['mark_duplicates']['mark_duplicates']['bam'].path
