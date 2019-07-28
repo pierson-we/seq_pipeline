@@ -299,7 +299,7 @@ class apply_bqsr(luigi.Task):
 	sample = luigi.Parameter()
 
 	def requires(self):
-		return {'base_recalibrator': base_recalibrator(case=self.case, sample=self.sample, cfg=self.cfg), 'indel_realigner': indel_realigner(cfg=self.cfg)}
+		return {'base_recalibrator': base_recalibrator(case=self.case, sample=self.sample, cfg=self.cfg)} #, 'indel_realigner': indel_realigner(cfg=self.cfg)}
 
 	def output(self):
 		return {'apply_bqsr': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'preprocess', '%s_%s_recalibrated.bam' % (self.case, self.sample))), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_%s_apply_bqsr_err.txt' % (self.case, self.sample)))}
