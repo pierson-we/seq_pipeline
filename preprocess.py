@@ -292,7 +292,7 @@ class base_recalibrator(luigi.Task):
 
 class apply_bqsr(luigi.Task):
 	priority = 92
-	resources = {'threads': 1}
+	resources = {'threads': 4} # this actually only uses one thread, but the RAM requirements are large
 	cfg = luigi.DictParameter()
 
 	case = luigi.Parameter()
