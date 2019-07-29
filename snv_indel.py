@@ -106,7 +106,7 @@ class mutect2_pon(luigi.Task):
 
 
 	def run(self):
-		cmd = ['java', '-Dsamjdk.use_async_io_read_samtools=false', '-Dsamjdk.use_async_io_write_samtools=true', '-Dsamjdk.use_async_io_write_tribble=false', '-Dsamjdk.compression_level=2', '-Djava.io.tmpdir=%s' % self.cfg['tmp_dir'], '-jar', '/root/pipeline/resources/broad/gatk-4.0.12.0/gatk-package-4.0.12.0-local.jar', 'CreateSomaticPanelOfNormals', '-O', self.output()['mutect2_pon'].path]
+		cmd = ['java', '-Dsamjdk.use_async_io_read_samtools=false', '-Dsamjdk.use_async_io_write_samtools=true', '-Dsamjdk.use_async_io_write_tribble=false', '-Dsamjdk.compression_level=2', '-Djava.io.tmpdir=%s' % self.cfg['tmp_dir'], '-jar', '/root/pipeline/resources/broad/gatk-4.0.12.0/gatk-package-4.0.12.0-local.jar', 'CreateSomaticPanelOfNormals', '-O', self.output()['mutect2_pon'].path, '--tmp-dir', self.cfg['tmp_dir']]
 		for case in self.input():
 			cmd += ['-vcfs', self.input()[case]['mutect2_normal']['mutect2_normal'].path]
 		if self.cfg['cluster_exec']:
@@ -141,7 +141,7 @@ class mutect2(luigi.Task):
 	def run(self):
 		cmd = ['gatk4', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], 'Mutect2', '-R', self.cfg['fasta_file'], '--native-pair-hmm-threads', self.cfg['max_threads'], '--germline-resource', self.cfg['gnomad'], '--panel-of-normals', self.input()['mutect2_pon']['mutect2_pon'].path, '-L', self.cfg['library_bed'], '-I', self.input()['T']['preprocess']['bam'].path, '-O', self.output()['mutect2'].path]
 		if 'N' in self.cfg['cases'][self.case]:
-			cmd += ['-I', self.input()['T']['preprocess']['bam'].path, '-normal', '%s_N' % self.case]
+			cmd += ['-I', self.input()['N']['preprocess']['bam'].path, '-normal', '%s_N' % self.case]
 		if self.cfg['cluster_exec']:
 			pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=16, cfg=self.cfg, err_log=self.output()['err_log'].path)
 		else:
