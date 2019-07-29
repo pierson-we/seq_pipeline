@@ -148,7 +148,7 @@ class mutect2(luigi.Task):
 			pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
 
 class filter_mutect2(luigi.Task):
-	priority = 87
+	priority = 86
 	resources = {'threads': 1}
 	cfg = luigi.DictParameter()
 
@@ -345,7 +345,7 @@ class scalpel_export(luigi.Task):
 			pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
 
 class vcf2maf(luigi.Task):
-	priority = 87
+	priority = 85
 	resources = {'threads': 1}
 	cfg = luigi.DictParameter()
 
@@ -375,7 +375,7 @@ class vcf2maf(luigi.Task):
 			pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
 
 class variant_calling(luigi.Task):
-	priority = 86
+	priority = 80
 	resources = {'threads': 1}
 	cfg = luigi.DictParameter()
 
