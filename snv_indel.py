@@ -110,7 +110,7 @@ class mutect2(luigi.Task):
 		return outputs
 
 	def run(self):
-		cmd = ['gatk4', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], 'Mutect2', '-R', self.cfg['fasta_file'], '--native-pair-hmm-threads', self.cfg['max_threads'], '--germline-resource', self.cfg['gnomad'], '--panel-of-normals', self.input()['mutect2_pon']['mutect2_pon'].path, '-I', self.input()['T']['preprocess']['bam'].path, '-O', self.output()['mutect2'].path]
+		cmd = ['gatk4', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], 'Mutect2', '-R', self.cfg['fasta_file'], '--native-pair-hmm-threads', self.cfg['max_threads'], '--germline-resource', self.cfg['gnomad'], '--panel-of-normals', self.input()['mutect2_pon']['mutect2_pon'].path, '-L', self.cfg['library_bed'], '-I', self.input()['T']['preprocess']['bam'].path, '-O', self.output()['mutect2'].path]
 		if 'N' in self.cfg['cases'][self.case]:
 			cmd += ['-I', self.input()['T']['preprocess']['bam'].path, '-normal', '%s_N' % self.case]
 		if self.cfg['cluster_exec']:
