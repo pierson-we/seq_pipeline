@@ -46,7 +46,7 @@ class pon_genomicsDB(luigi.Task):
 		return requirements
 
 	def output(self):
-		outputs = {'pon_genomicsDB': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], 'all_samples', 'variant_prep', 'pon_db', 'output.db')), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], 'all_samples', 'log', 'pon_genomicsDBerr.txt'))}
+		outputs = {'pon_genomicsDB': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], 'all_samples', 'variant_prep', 'pon_db', 'vcfheader.vcf')), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], 'all_samples', 'log', 'pon_genomicsDBerr.txt'))}
 		for task in outputs:
 			if isinstance(outputs[task], luigi.LocalTarget):
 				pipeline_utils.confirm_path(outputs[task].path)
@@ -79,7 +79,7 @@ class mutect2_pon(luigi.Task):
 
 
 	def run(self):
-		cmd = ['gatk4', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], 'CreateSomaticPanelOfNormals', '-R', self.cfg['fasta_file'], '-V', self.input()['pon_genomicsDB']['pon_genomicsDB'].path, '-L', self.cfg['library_bed'], '-O', self.output()['mutect2_pon'].path]
+		cmd = ['gatk4', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], 'CreateSomaticPanelOfNormals', '-R', self.cfg['fasta_file'], '-V', 'gendb://%s' % os.path.dirname(self.input()['pon_genomicsDB']['pon_genomicsDB'].path), '-L', self.cfg['library_bed'], '-O', self.output()['mutect2_pon'].path]
 		if self.cfg['cluster_exec']:
 			pipeline_utils.cluster_command_call(self, cmd, threads=1, ram=12, cfg=self.cfg, err_log=self.output()['err_log'].path)
 		else:
