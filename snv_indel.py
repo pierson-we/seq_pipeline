@@ -147,6 +147,34 @@ class mutect2(luigi.Task):
 		else:
 			pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
 
+class filter_mutect2(luigi.Task):
+	priority = 87
+	resources = {'threads': 1}
+	cfg = luigi.DictParameter()
+
+	case = luigi.Parameter()
+
+	# @property # This is necessary to assign a dynamic value to the 'threads' resource within a task
+	# def resources(self):
+	# 	return {'threads': self.cfg['max_threads']}
+
+	def requires(self):
+		return {'mutect2': mutect2(case=self.case, cfg=self.cfg)}
+
+	def output(self):
+		outputs = {'filter_mutect2': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variant_prep', '%s_mutect2_filtered.vcf.gz' % self.case)), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_filter_mutect2_err.txt' % self.case))}
+		for task in outputs:
+			if isinstance(outputs[task], luigi.LocalTarget):
+				pipeline_utils.confirm_path(outputs[task].path)
+		return outputs
+
+	def run(self):
+		cmd = ['gatk4', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], 'FilterMutectCalls', '-R', self.cfg['fasta_file'], '-V', self.input()['mutect2']['mutect2'].path, '-O', self.output()['filter_mutect2'].path]
+		if self.cfg['cluster_exec']:
+			pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=16, cfg=self.cfg, err_log=self.output()['err_log'].path)
+		else:
+			pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
+
 class lofreq(luigi.Task):
 	priority = 87
 	cfg = luigi.DictParameter()
@@ -316,6 +344,36 @@ class scalpel_export(luigi.Task):
 		else:
 			pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
 
+class vcf2maf(luigi.Task):
+	priority = 87
+	resources = {'threads': 1}
+	cfg = luigi.DictParameter()
+
+	case = luigi.Parameter()
+
+	# @property # This is necessary to assign a dynamic value to the 'threads' resource within a task
+	# def resources(self):
+	# 	return {'threads': self.cfg['max_threads']}
+
+	def requires(self):
+		return {'filter_mutect2': filter_mutect2(case=self.case, cfg=self.cfg)}
+
+	def output(self):
+		outputs = {'vcf2maf': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variants', '%s.maf' % self.case)), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_vcf2maf_err.txt' % self.case))}
+		for task in outputs:
+			if isinstance(outputs[task], luigi.LocalTarget):
+				pipeline_utils.confirm_path(outputs[task].path)
+		return outputs
+
+	def run(self):
+		cmd = ['perl', 'vcf2maf.pl', '--input-vcf', self.input()['filter_mutect2']['filter_mutect2'].path, '--output-maf', self.output()['vcf2maf'].path, '--tumor-id', '%s_T' % self.case]
+		if 'N' in self.cfg['cases'][self.case]:
+			cmd += ['--normal-id', '%s_N' % self.case]
+		if self.cfg['cluster_exec']:
+			pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=16, cfg=self.cfg, err_log=self.output()['err_log'].path)
+		else:
+			pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
+
 class variant_calling(luigi.Task):
 	priority = 86
 	resources = {'threads': 1}
@@ -326,7 +384,7 @@ class variant_calling(luigi.Task):
 	def requires(self):
 		# requirements = {'scalpel_export': scalpel_export(case=self.case, cfg=self.cfg),
 		# 'lofreq': lofreq(case=self.case, cfg=self.cfg),
-		requirements = {'mutect2': mutect2(case=self.case, cfg=self.cfg)}
+		requirements = {'filter_mutect2': filter_mutect2(case=self.case, cfg=self.cfg)}
 		# if 'N' in self.cfg['cases'][self.case]:
 		# 	requirements['strelka'] = strelka(case=self.case, cfg=self.cfg)
 		return requirements
