@@ -33,7 +33,7 @@ class mutect2_normal(luigi.Task):
 		else:
 			pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
 
-class mutect2_pon(luigi.Task):
+class pon_genomicsDB(luigi.Task):
 	priority = 88
 	resources = {'threads': 1}
 	cfg = luigi.DictParameter()
@@ -46,6 +46,31 @@ class mutect2_pon(luigi.Task):
 		return requirements
 
 	def output(self):
+		outputs = {'pon_genomicsDB': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], 'all_samples', 'variant_prep', 'pon_db', 'output.db')), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], 'all_samples', 'log', 'pon_genomicsDBerr.txt'))}
+		for task in outputs:
+			if isinstance(outputs[task], luigi.LocalTarget):
+				pipeline_utils.confirm_path(outputs[task].path)
+		return outputs
+
+
+	def run(self):
+		cmd = ['gatk4', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], 'GenomicsDBImport', '-R', self.cfg['fasta_file'], '-L', self.cfg['library_bed'], '--genomicsdb-workspace-path', self.output()['pon_genomicsDB'].path]
+		for case in self.input():
+			cmd += ['-V', self.input()[case]['mutect2_normal']['mutect2_normal'].path]
+		if self.cfg['cluster_exec']:
+			pipeline_utils.cluster_command_call(self, cmd, threads=1, ram=12, cfg=self.cfg, err_log=self.output()['err_log'].path)
+		else:
+			pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
+
+class mutect2_pon(luigi.Task):
+	priority = 88
+	resources = {'threads': 1}
+	cfg = luigi.DictParameter()
+
+	def requires(self):
+		return {'pon_genomicsDB': pon_genomicsDB(cfg=self.cfg)}
+
+	def output(self):
 		outputs = {'mutect2_pon': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], 'all_samples', 'variant_prep', 'mutect2_pon.vcf.gz')), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], 'all_samples', 'log', 'mutect2_pon_err.txt'))}
 		for task in outputs:
 			if isinstance(outputs[task], luigi.LocalTarget):
@@ -54,9 +79,7 @@ class mutect2_pon(luigi.Task):
 
 
 	def run(self):
-		cmd = ['gatk4', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], 'CreateSomaticPanelOfNormals', '-R', self.cfg['fasta_file'], '-O', self.output()['mutect2_pon'].path]
-		for case in self.input():
-			cmd += ['-V', self.input()[case]['mutect2_normal']['mutect2_normal'].path]
+		cmd = ['gatk4', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], 'CreateSomaticPanelOfNormals', '-R', self.cfg['fasta_file'], '-V', self.input()['pon_genomicsDB']['pon_genomicsDB'].path, '-L', self.cfg['library_bed'], '-O', self.output()['mutect2_pon'].path]
 		if self.cfg['cluster_exec']:
 			pipeline_utils.cluster_command_call(self, cmd, threads=1, ram=12, cfg=self.cfg, err_log=self.output()['err_log'].path)
 		else:
