@@ -56,7 +56,7 @@ class mutect2_pon(luigi.Task):
 	def run(self):
 		cmd = ['gatk4', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], 'CreateSomaticPanelOfNormals', '-R', self.cfg['fasta_file'], '-O', self.output()['mutect2_pon'].path]
 		for case in self.input():
-			cmd += ['-vcfs', self.input()[case]['mutect2_normal']['mutect2_normal'].path]
+			cmd += ['-V', self.input()[case]['mutect2_normal']['mutect2_normal'].path]
 		if self.cfg['cluster_exec']:
 			pipeline_utils.cluster_command_call(self, cmd, threads=1, ram=12, cfg=self.cfg, err_log=self.output()['err_log'].path)
 		else:
