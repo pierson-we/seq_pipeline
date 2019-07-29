@@ -54,7 +54,7 @@ class pon_genomicsDB(luigi.Task):
 
 
 	def run(self):
-		cmd = ['gatk4', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], 'GenomicsDBImport', '-R', self.cfg['fasta_file'], '-L', self.cfg['library_bed'], '--genomicsdb-workspace-path', self.output()['pon_genomicsDB'].path]
+		cmd = ['gatk4', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], 'GenomicsDBImport', '-R', self.cfg['fasta_file'], '-L', self.cfg['library_bed'], '--genomicsdb-workspace-path', os.path.dirname(self.output()['pon_genomicsDB'].path)]
 		for case in self.input():
 			cmd += ['-V', self.input()[case]['mutect2_normal']['mutect2_normal'].path]
 		if self.cfg['cluster_exec']:
