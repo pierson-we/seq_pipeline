@@ -2,6 +2,8 @@ import subprocess
 import luigi
 import os
 import sys
+import shutil
+import gzip
 import pipeline_utils
 import preprocess
 
