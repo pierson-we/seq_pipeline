@@ -366,7 +366,13 @@ class vcf2maf(luigi.Task):
 		return outputs
 
 	def run(self):
-		cmd = ['perl', '/root/pipeline/code/source/vcf2maf/vcf2maf.pl', '--ref-fasta', self.cfg['fasta_file'], '--vep-forks', self.cfg['max_threads'], '--input-vcf', self.input()['filter_mutect2']['filter_mutect2'].path, '--output-maf', self.output()['vcf2maf'].path, '--tumor-id', '%s_T' % self.case]
+		if self.input()['filter_mutect2']['filter_mutect2'].path.endswith('.gz'):
+			input_vcf = self.input()['filter_mutect2']['filter_mutect2'].path.split('.gz')[0]
+			with gzip.open(self.input()['filter_mutect2']['filter_mutect2'].path, 'rb') as vcf_in, open(input_vcf, 'wb') as vcf_out:
+				shutil.copyfileobj(vcf_in, vcf_out)
+		else:
+			input_vcf = self.input()['filter_mutect2']['filter_mutect2'].path.endswith('.gz')
+		cmd = ['perl', '/root/pipeline/code/source/vcf2maf/vcf2maf.pl', '--ref-fasta', self.cfg['fasta_file'], '--vep-forks', self.cfg['max_threads'], '--input-vcf', input_vcf, '--output-maf', self.output()['vcf2maf'].path, '--tumor-id', '%s_T' % self.case]
 		if 'N' in self.cfg['cases'][self.case]:
 			cmd += ['--normal-id', '%s_N' % self.case]
 		if self.cfg['cluster_exec']:
