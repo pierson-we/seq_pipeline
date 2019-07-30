@@ -361,7 +361,7 @@ class vcf2maf(luigi.Task):
 		return {'filter_mutect2': filter_mutect2(case=self.case, cfg=self.cfg)}
 
 	def output(self):
-		outputs = {'vcf2maf': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variants', '%s.maf' % self.case)), 'vep': luigi.LocalTarget('%s.vep.vcf' % self.input()['mutect2']['mutect2'].path.split['.vcf'][0]), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_vcf2maf_err.txt' % self.case))}
+		outputs = {'vcf2maf': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variants', '%s.maf' % self.case)), 'vep': luigi.LocalTarget('%s.vep.vcf' % self.input()['filter_mutect2']['filter_mutect2'].path.split['.vcf'][0]), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_vcf2maf_err.txt' % self.case))}
 		for task in outputs:
 			if isinstance(outputs[task], luigi.LocalTarget):
 				pipeline_utils.confirm_path(outputs[task].path)
