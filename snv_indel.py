@@ -366,7 +366,7 @@ class vcf2maf(luigi.Task):
 		return outputs
 
 	def run(self):
-		cmd = ['perl', 'vcf2maf.pl', '--input-vcf', self.input()['filter_mutect2']['filter_mutect2'].path, '--output-maf', self.output()['vcf2maf'].path, '--tumor-id', '%s_T' % self.case]
+		cmd = ['perl', 'vcf2maf.pl', '--ref-fasta', self.cfg['fasta_file'], '--input-vcf', self.input()['filter_mutect2']['filter_mutect2'].path, '--output-maf', self.output()['vcf2maf'].path, '--tumor-id', '%s_T' % self.case]
 		if 'N' in self.cfg['cases'][self.case]:
 			cmd += ['--normal-id', '%s_N' % self.case]
 		if self.cfg['cluster_exec']:
