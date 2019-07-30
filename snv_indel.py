@@ -346,14 +346,14 @@ class scalpel_export(luigi.Task):
 
 class vcf2maf(luigi.Task):
 	priority = 85
-	resources = {'threads': 1}
+	# resources = {'threads': 1}
 	cfg = luigi.DictParameter()
 
 	case = luigi.Parameter()
 
-	# @property # This is necessary to assign a dynamic value to the 'threads' resource within a task
-	# def resources(self):
-	# 	return {'threads': self.cfg['max_threads']}
+	@property # This is necessary to assign a dynamic value to the 'threads' resource within a task
+	def resources(self):
+		return {'threads': self.cfg['max_threads']}
 
 	def requires(self):
 		return {'filter_mutect2': filter_mutect2(case=self.case, cfg=self.cfg)}
@@ -366,7 +366,7 @@ class vcf2maf(luigi.Task):
 		return outputs
 
 	def run(self):
-		cmd = ['perl', 'vcf2maf.pl', '--ref-fasta', self.cfg['fasta_file'], '--input-vcf', self.input()['filter_mutect2']['filter_mutect2'].path, '--output-maf', self.output()['vcf2maf'].path, '--tumor-id', '%s_T' % self.case]
+		cmd = ['perl', '/root/pipeline/code/source/vcf2maf/vcf2maf.pl', '--ref-fasta', self.cfg['fasta_file'], '--vep-forks', self.cfg['max_threads'], '--input-vcf', self.input()['filter_mutect2']['filter_mutect2'].path, '--output-maf', self.output()['vcf2maf'].path, '--tumor-id', '%s_T' % self.case]
 		if 'N' in self.cfg['cases'][self.case]:
 			cmd += ['--normal-id', '%s_N' % self.case]
 		if self.cfg['cluster_exec']:
@@ -384,7 +384,7 @@ class variant_calling(luigi.Task):
 	def requires(self):
 		# requirements = {'scalpel_export': scalpel_export(case=self.case, cfg=self.cfg),
 		# 'lofreq': lofreq(case=self.case, cfg=self.cfg),
-		requirements = {'filter_mutect2': filter_mutect2(case=self.case, cfg=self.cfg)}
+		requirements = {'vcf2maf': vcf2maf(case=self.case, cfg=self.cfg)}
 		# if 'N' in self.cfg['cases'][self.case]:
 		# 	requirements['strelka'] = strelka(case=self.case, cfg=self.cfg)
 		return requirements
