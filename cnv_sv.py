@@ -6,18 +6,21 @@ import pipeline_utils
 
 class facets_snp_pileup(luigi.Task):
 	priority = 88
+	resources = {'threads': 1}
 	cfg = luigi.DictParameter()
 
 	case = luigi.Parameter()
 
-	@property # This is necessary to assign a dynamic value to the 'threads' resource within a task
-	def resources(self):
-		return {'threads': self.cfg['max_threads']}
+	# @property # This is necessary to assign a dynamic value to the 'threads' resource within a task
+	# def resources(self):
+	# 	return {'threads': self.cfg['max_threads']}
 
 	def requires(self):
 		requirements = {'T': {'preprocess': preprocess.preprocess(case=self.case, sample='T', cfg=self.cfg)}}
 		if 'N' in self.cfg['cases'][self.case]:
 			requirements['N'] = {'preprocess': preprocess.preprocess(case=self.case, sample='N', cfg=self.cfg)}
+		else:
+			requirements['N'] = {'preprocess': preprocess.preprocess(case='1010', sample='N', cfg=self.cfg)}
 		return requirements
 
 	def output(self):
@@ -27,12 +30,9 @@ class facets_snp_pileup(luigi.Task):
 		return outputs
 
 	def run(self):
-		cmd = ['snp-pileup', '-g', '-q15', '-Q20', '-P100', '-r25,0', self.cfg['germline_all'], self.output()['facets_snp_pileup']]
-		if 'N' in self.cfg['cases'][self.case]:
-			cmd.append(self.input()['N']['preprocess']['bam'])
-		cmd.append(self.input()['T']['preprocess']['bam'])
+		cmd = ['snp-pileup', '-g', '-q15', '-Q20', '-P100', '-r25,0', self.cfg['germline_all'], self.output()['facets_snp_pileup'], self.input()['N']['preprocess']['bam'], self.input()['T']['preprocess']['bam']]
 		if self.cfg['cluster_exec']:
-			pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=16, cfg=self.cfg, err_log=self.output()['err_log'].path)
+			pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=2, cfg=self.cfg, err_log=self.output()['err_log'].path)
 		else:
 			pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
 
