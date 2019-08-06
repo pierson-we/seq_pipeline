@@ -3,6 +3,7 @@ import luigi
 import os
 import sys
 import pipeline_utils
+import preprocess
 
 class facets_snp_pileup(luigi.Task):
 	priority = 88
