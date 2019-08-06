@@ -32,7 +32,7 @@ class facets_snp_pileup(luigi.Task):
 		return outputs
 
 	def run(self):
-		cmd = ['snp-pileup', '-g', '-q15', '-Q20', '-P100', '-r25,0', self.cfg['germline_all'], self.output()['facets_snp_pileup'], self.input()['N']['preprocess']['bam'], self.input()['T']['preprocess']['bam']]
+		cmd = ['snp-pileup', '-g', '-q15', '-Q20', '-P100', '-r25,0', self.cfg['germline_all'], self.output()['facets_snp_pileup'].path, self.input()['N']['preprocess']['bam'].path, self.input()['T']['preprocess']['bam'].path]
 		if self.cfg['cluster_exec']:
 			pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=2, cfg=self.cfg, err_log=self.output()['err_log'].path)
 		else:
