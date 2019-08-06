@@ -8,6 +8,7 @@ import luigi
 import pipeline_utils
 import preprocess
 import snv_indel
+import cnv_sv
 
 def run_pipeline(args):
 	# import variant_analysis
