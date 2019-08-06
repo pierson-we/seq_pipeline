@@ -397,7 +397,7 @@ class msisensor(luigi.Task):
 		return {'preprocess': preprocess.preprocess(case=self.case, sample='T', cfg=self.cfg)}
 
 	def output(self):
-		return {'msisensor': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variants', '%s.msisensor' % self.case)), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_msisensor_err.txt' % self.case))}
+		return {'msisensor': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variants', '%s_updated.msisensor' % self.case)), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_msisensor_err.txt' % self.case))}
 
 	def run(self):
 		cmd = ['msisensor', 'msi', '-d', '/root/pipeline/resources/misc/microsatellites.list', '-t', self.input()['preprocess']['bam'].path, '-e', self.cfg['library_bed'], '-o', self.output()['msisensor'].path, '-b', self.cfg['max_threads'], '-l', '1', '-q', '1', '-c', '20']
