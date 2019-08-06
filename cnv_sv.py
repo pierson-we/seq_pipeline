@@ -26,8 +26,9 @@ class facets_snp_pileup(luigi.Task):
 
 	def output(self):
 		outputs = {'facets_snp_pileup': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variant_prep', '%s_facets_snp_pileup.csv.gz' % self.case)), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_facets_snp_pileup_err.txt' % self.case))}	
-		if isinstance(outputs[task], luigi.LocalTarget):
-			pipeline_utils.confirm_path(outputs[task].path)
+		for task in outputs:
+			if isinstance(outputs[task], luigi.LocalTarget):
+				pipeline_utils.confirm_path(outputs[task].path)
 		return outputs
 
 	def run(self):
