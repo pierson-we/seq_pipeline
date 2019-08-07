@@ -407,13 +407,13 @@ class msisensor(luigi.Task):
 		return outputs
 
 	def run(self):
-		cmd = ['msisensor', 'msi', '-d', '/root/pipeline/resources/misc/microsatellites.list', '-t', self.input()['T']['preprocess']['bam'].path, '-o', self.output()['msisensor'].path, '-b', self.cfg['max_threads'], '-l', '1', '-q', '1', '-c', '20'] # , '-e', self.cfg['library_bed']
+		cmd = ['msisensor', 'msi', '-d', '/root/pipeline/resources/misc/hg19_microsatellites.list', '-t', self.input()['T']['preprocess']['bam'].path, '-o', self.output()['msisensor'].path, '-l', '1', '-q', '1', '-c', '20'] # , '-e', self.cfg['library_bed'], '-b', self.cfg['max_threads']
 		if self.cfg['cluster_exec']:
 			pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=16, cfg=self.cfg, err_log=self.output()['err_log'].path)
 		else:
 			pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
 		if 'N' in self.cfg['cases'][self.case]:
-			cmd = ['msisensor', 'msi', '-d', '/root/pipeline/resources/misc/microsatellites.list', '-t', self.input()['T']['preprocess']['bam'].path, '-n', self.input()['N']['preprocess']['bam'].path, '-o', self.output()['msisensor_matched'].path, '-l', '1', '-q', '1', '-c', '20'] # , '-e', self.cfg['library_bed'], '-b', self.cfg['max_threads'],
+			cmd = ['msisensor', 'msi', '-d', '/root/pipeline/resources/misc/hg19_microsatellites.list', '-t', self.input()['T']['preprocess']['bam'].path, '-n', self.input()['N']['preprocess']['bam'].path, '-o', self.output()['msisensor_matched'].path, '-l', '1', '-q', '1', '-c', '20'] # , '-e', self.cfg['library_bed'], '-b', self.cfg['max_threads'],
 			if self.cfg['cluster_exec']:
 				pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=16, cfg=self.cfg, err_log=self.output()['err_log'].path)
 			else:
