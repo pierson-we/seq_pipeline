@@ -384,27 +384,37 @@ class vcf2maf(luigi.Task):
 
 class msisensor(luigi.Task):
 	priority = 85
-	# resources = {'threads': 1}
+	resources = {'threads': 1}
 	cfg = luigi.DictParameter()
 
 	case = luigi.Parameter()
 
-	@property # This is necessary to assign a dynamic value to the 'threads' resource within a task
-	def resources(self):
-		return {'threads': self.cfg['max_threads']}
+	# @property # This is necessary to assign a dynamic value to the 'threads' resource within a task
+	# def resources(self):
+	# 	return {'threads': self.cfg['max_threads']}
 
 	def requires(self):
-		return {'preprocess': preprocess.preprocess(case=self.case, sample='T', cfg=self.cfg)}
+		requirements = {'T': {'preprocess': preprocess.preprocess(case=self.case, sample='T', cfg=self.cfg)}}
+		if 'N' in self.cfg['cases'][self.case]:
+			requirements['N'] = {'preprocess': preprocess.preprocess(case=self.case, sample='N', cfg=self.cfg)}
 
 	def output(self):
-		return {'msisensor': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variants', '%s_updated.msisensor' % self.case)), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_msisensor_err.txt' % self.case))}
-
+		outputs = {'msisensor': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variants', '%s_updated.msisensor' % self.case)), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_msisensor_err.txt' % self.case))}
+		if 'N' in self.cfg['cases'][self.case]:
+			outputs['msisensor_matched'] = luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variants', '%s_matched.msisensor' % self.case))
+			outputs['err_log_matched'] = luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_msisensor_matched_err.txt' % self.case))
 	def run(self):
-		cmd = ['msisensor', 'msi', '-d', '/root/pipeline/resources/misc/microsatellites.list', '-t', self.input()['preprocess']['bam'].path, '-e', self.cfg['library_bed'], '-o', self.output()['msisensor'].path, '-b', self.cfg['max_threads'], '-l', '1', '-q', '1', '-c', '20']
+		cmd = ['msisensor', 'msi', '-d', '/root/pipeline/resources/misc/microsatellites.list', '-t', self.input()['T']['preprocess']['bam'].path, '-e', self.cfg['library_bed'], '-o', self.output()['msisensor'].path, '-b', self.cfg['max_threads'], '-l', '1', '-q', '1', '-c', '20']
 		if self.cfg['cluster_exec']:
 			pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=16, cfg=self.cfg, err_log=self.output()['err_log'].path)
 		else:
 			pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
+		if 'N' in self.cfg['cases'][self.case]:
+			cmd = ['msisensor', 'msi', '-d', '/root/pipeline/resources/misc/microsatellites.list', '-t', self.input()['T']['preprocess']['bam'].path, '-n', self.input()['N']['preprocess']['bam'].path, '-e', self.cfg['library_bed'], '-o', self.output()['msisensor_matched'].path, '-l', '1', '-q', '1', '-c', '20'] # '-b', self.cfg['max_threads'],
+			if self.cfg['cluster_exec']:
+				pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=16, cfg=self.cfg, err_log=self.output()['err_log'].path)
+			else:
+				pipeline_utils.command_call(cmd, err_log=self.output()['err_log_matched'].path)
 
 
 
