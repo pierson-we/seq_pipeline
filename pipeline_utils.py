@@ -45,7 +45,7 @@ def command_call(cmd, err_log=False):
 	if err_log:
 		with open(tmp_err_log, 'a') as f:
 			f.write('\n\n***\nCommand completed in %s minutes\n***' % round((end-start)/60, 2))
-	os.rename(tmp_err_log, err_log)
+		os.rename(tmp_err_log, err_log)
 	
 def piped_command_call(cmds, err_log, output_file=False):
 	start = time.time()
