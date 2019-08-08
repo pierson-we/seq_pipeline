@@ -127,7 +127,7 @@ class haplotype_caller(luigi.Task):
 		return {'threads': self.cfg['max_threads']}
 
 	def requires(self):
-		return {'preprocess': preprocess.preprocess(case=self.case, sample=self.sample, cfg=self.cfg)}
+		return {'preprocess': preprocess.preprocess(case=self.case, sample='N', cfg=self.cfg)}
 
 	def output(self):
 		outputs =  {'haplotype_caller': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variant_prep', '%s_%s_haplotype_caller.vcf.gz' % (self.case, self.sample))), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_%s_haplotype_caller_err.txt' % (self.case, self.sample)))}
@@ -458,7 +458,9 @@ class variant_calling(luigi.Task):
 	def requires(self):
 		# requirements = {'scalpel_export': scalpel_export(case=self.case, cfg=self.cfg),
 		# 'lofreq': lofreq(case=self.case, cfg=self.cfg),
-		requirements = {'vcf2maf': vcf2maf(case=self.case, cfg=self.cfg), 'haplotype_caller': haplotype_caller(case=self.case, cfg=self.cfg)}
+		requirements = {'vcf2maf': vcf2maf(case=self.case, cfg=self.cfg)}
+		if 'N' in self.cfg['cases'][self.case]:
+			requirements['haplotype_caller'] = haplotype_caller(case=self.case, cfg=self.cfg)
 		# if 'N' in self.cfg['cases'][self.case]:
 		# 	requirements['strelka'] = strelka(case=self.case, cfg=self.cfg)
 		return requirements
