@@ -143,6 +143,71 @@ class haplotype_caller(luigi.Task):
 		else:
 			pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
 
+class filter_germline(luigi.Task):
+	priority = 89
+	resources = {'threads': 1}
+	cfg = luigi.DictParameter()
+
+	case = luigi.Parameter()
+
+	# @property # This is necessary to assign a dynamic value to the 'threads' resource within a task
+	# def resources(self):
+	# 	return {'threads': self.cfg['max_threads']}
+
+	def requires(self):
+		return {'haplotype_caller': haplotype_caller(case=self.case, cfg=self.cfg)}
+
+	def output(self):
+		outputs =  {'filter_germline': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variants', '%s_germline.vcf.gz' % self.case)), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_filter_germline_err.txt' % self.case))}
+		for task in outputs:
+			if isinstance(outputs[task], luigi.LocalTarget):
+				pipeline_utils.confirm_path(outputs[task].path)
+		return outputs
+
+	def run(self):
+		file_base = self.output()['filter_germline'].path.split('.vcf.gz')[0]
+		raw_snps = file_base + 'snps.raw.vcf'
+		raw_indels = file_base + 'indels.raw.vcf'
+		filtered_snps = file_base + 'snps.filtered.vcf'
+		filtered_indels = file_base + 'indels.filtered.vcf'
+		# select snps
+		cmd = ['gatk4', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], 'SelectVariants', '-R', self.cfg['fasta_file'], '-V', self.input()['haplotype_caller']['haplotype_caller'].path, '--select-type-to-include', 'SNP', '-O', raw_snps]
+		if self.cfg['cluster_exec']:
+			pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=16, cfg=self.cfg)
+		else:
+			pipeline_utils.command_call(cmd)
+		# select indels
+		cmd = ['gatk4', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], 'SelectVariants', '-R', self.cfg['fasta_file'], '-V', self.input()['haplotype_caller']['haplotype_caller'].path, '--select-type-to-include', 'INDEL', '-O', raw_indels]
+		if self.cfg['cluster_exec']:
+			pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=16, cfg=self.cfg)
+		else:
+			pipeline_utils.command_call(cmd)
+		# filter snps
+		cmd = ['gatk4', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], 'VariantFiltration', '-R', self.cfg['fasta_file'], '-V', raw_snps '-O', filtered_snps]
+		for filter_name, filter_expression in [('"filter_1"', '"QD < 2.0"'), ('"filter_2"', '"FS > 60.0"'), ('"filter_3"', '"MQ < 40.0"'), ('"filter_4"', '"MQRankSum < -12.5"'), ('"filter_5"', '"ReadPosRankSum < -8.0"')]:
+			cmd += ['--filter-name', filter_name, '--filter-expression', filter_expression]
+		if self.cfg['cluster_exec']:
+			pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=16, cfg=self.cfg)
+		else:
+			pipeline_utils.command_call(cmd)
+		# filter indels
+		cmd = ['gatk4', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], 'VariantFiltration', '-R', self.cfg['fasta_file'], '-V', raw_indels '-O', filtered_indels]
+		for filter_name, filter_expression in [('"filter_1"', '"QD < 2.0"'), ('"filter_2"', '"FS > 200.0"'), ('"filter_3"', '"ReadPosRankSum < -20.0"')]:
+			cmd += ['--filter-name', filter_name, '--filter-expression', filter_expression]
+		if self.cfg['cluster_exec']:
+			pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=16, cfg=self.cfg)
+		else:
+			pipeline_utils.command_call(cmd)
+		# combine snps and indels
+		cmd = ['java', '-Djava.io.tmpdir=%s' % self.cfg['tmp_dir'], '-jar', '$PICARD', 'MergeVcfs', 'I=%s' % filtered_snps, 'I=%s' % filtered_indels, 'O=%s' % self.output()['filter_germline'].path]
+		if self.cfg['cluster_exec']:
+			pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=16, cfg=self.cfg, err_log=self.output()['err_log'].path)
+		else:
+			pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
+
+		for file in [raw_snps, raw_indels, filtered_snps, filtered_indels]:
+			os.remove(file)
+
 class mutect2(luigi.Task):
 	priority = 87
 	cfg = luigi.DictParameter()
@@ -460,7 +525,7 @@ class variant_calling(luigi.Task):
 		# 'lofreq': lofreq(case=self.case, cfg=self.cfg),
 		requirements = {'vcf2maf': vcf2maf(case=self.case, cfg=self.cfg)}
 		if 'N' in self.cfg['cases'][self.case]:
-			requirements['haplotype_caller'] = haplotype_caller(case=self.case, cfg=self.cfg)
+			requirements['filter_germline'] = filter_germline(case=self.case, cfg=self.cfg)
 		# if 'N' in self.cfg['cases'][self.case]:
 		# 	requirements['strelka'] = strelka(case=self.case, cfg=self.cfg)
 		return requirements
