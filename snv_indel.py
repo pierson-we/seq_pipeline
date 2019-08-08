@@ -130,7 +130,7 @@ class haplotype_caller(luigi.Task):
 		return {'preprocess': preprocess.preprocess(case=self.case, sample='N', cfg=self.cfg)}
 
 	def output(self):
-		outputs =  {'haplotype_caller': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variant_prep', '%s_%s_haplotype_caller.vcf.gz' % (self.case, self.sample))), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_%s_haplotype_caller_err.txt' % (self.case, self.sample)))}
+		outputs =  {'haplotype_caller': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variant_prep', '%s_haplotype_caller.vcf.gz' % self.case)), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_haplotype_caller_err.txt' % self.case))}
 		for task in outputs:
 			if isinstance(outputs[task], luigi.LocalTarget):
 				pipeline_utils.confirm_path(outputs[task].path)
