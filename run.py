@@ -60,6 +60,7 @@ class cases(luigi.Task):
 	fasta_file = luigi.Parameter()
 	germline_indels = luigi.Parameter()
 	germline_all = luigi.Parameter()
+	germline_genes = luigi.Parameter()
 	gnomad = luigi.Parameter()
 	platform = luigi.Parameter()
 	library = luigi.Parameter()
@@ -109,6 +110,7 @@ class cases(luigi.Task):
 			'max_threads': self.max_threads,
 			'germline_indels': self.germline_indels,
 			'germline_all': self.germline_all,
+			'germline_genes': self.germline_genes,
 			'gnomad': self.gnomad,
 			'platform': self.platform,
 			'library': self.library,
