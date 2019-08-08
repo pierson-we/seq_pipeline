@@ -116,6 +116,33 @@ class mutect2_pon(luigi.Task):
 		else:
 			pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
 
+class haplotype_caller(luigi.Task):
+	priority = 89
+	cfg = luigi.DictParameter()
+
+	case = luigi.Parameter()
+
+	@property # This is necessary to assign a dynamic value to the 'threads' resource within a task
+	def resources(self):
+		return {'threads': self.cfg['max_threads']}
+
+	def requires(self):
+		return {'preprocess': preprocess.preprocess(case=self.case, sample=self.sample, cfg=self.cfg)}
+
+	def output(self):
+		outputs =  {'haplotype_caller': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variant_prep', '%s_%s_haplotype_caller.vcf.gz' % (self.case, self.sample))), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_%s_haplotype_caller_err.txt' % (self.case, self.sample)))}
+		for task in outputs:
+			if isinstance(outputs[task], luigi.LocalTarget):
+				pipeline_utils.confirm_path(outputs[task].path)
+		return outputs
+
+	def run(self):
+		cmd = ['gatk4', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], 'HaplotypeCaller', '-R', self.cfg['fasta_file'], '-L', self.cfg['germline_genes'], '--native-pair-hmm-threads', self.cfg['max_threads'], '-I', self.input()['preprocess']['bam'].path, '-O', self.output()['haplotype_caller'].path]
+		if self.cfg['cluster_exec']:
+			pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=16, cfg=self.cfg, err_log=self.output()['err_log'].path)
+		else:
+			pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
+
 class mutect2(luigi.Task):
 	priority = 87
 	cfg = luigi.DictParameter()
