@@ -183,7 +183,7 @@ class filter_germline(luigi.Task):
 		else:
 			pipeline_utils.command_call(cmd)
 		# filter snps
-		cmd = ['gatk4', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], 'VariantFiltration', '-R', self.cfg['fasta_file'], '-V', raw_snps '-O', filtered_snps]
+		cmd = ['gatk4', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], 'VariantFiltration', '-R', self.cfg['fasta_file'], '-V', raw_snps, '-O', filtered_snps]
 		for filter_name, filter_expression in [('"filter_1"', '"QD < 2.0"'), ('"filter_2"', '"FS > 60.0"'), ('"filter_3"', '"MQ < 40.0"'), ('"filter_4"', '"MQRankSum < -12.5"'), ('"filter_5"', '"ReadPosRankSum < -8.0"')]:
 			cmd += ['--filter-name', filter_name, '--filter-expression', filter_expression]
 		if self.cfg['cluster_exec']:
@@ -191,7 +191,7 @@ class filter_germline(luigi.Task):
 		else:
 			pipeline_utils.command_call(cmd)
 		# filter indels
-		cmd = ['gatk4', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], 'VariantFiltration', '-R', self.cfg['fasta_file'], '-V', raw_indels '-O', filtered_indels]
+		cmd = ['gatk4', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], 'VariantFiltration', '-R', self.cfg['fasta_file'], '-V', raw_indels, '-O', filtered_indels]
 		for filter_name, filter_expression in [('"filter_1"', '"QD < 2.0"'), ('"filter_2"', '"FS > 200.0"'), ('"filter_3"', '"ReadPosRankSum < -20.0"')]:
 			cmd += ['--filter-name', filter_name, '--filter-expression', filter_expression]
 		if self.cfg['cluster_exec']:
