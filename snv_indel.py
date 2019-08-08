@@ -166,10 +166,10 @@ class filter_germline(luigi.Task):
 
 	def run(self):
 		file_base = self.output()['filter_germline'].path.split('.vcf.gz')[0]
-		raw_snps = file_base + 'snps.raw.vcf'
-		raw_indels = file_base + 'indels.raw.vcf'
-		filtered_snps = file_base + 'snps.filtered.vcf'
-		filtered_indels = file_base + 'indels.filtered.vcf'
+		raw_snps = file_base + '.snps.raw.vcf'
+		raw_indels = file_base + '.indels.raw.vcf'
+		filtered_snps = file_base + '.snps.filtered.vcf'
+		filtered_indels = file_base + '.indels.filtered.vcf'
 		# select snps
 		cmd = ['gatk4', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], 'SelectVariants', '-R', self.cfg['fasta_file'], '-V', self.input()['haplotype_caller']['haplotype_caller'].path, '--select-type-to-include', 'SNP', '-O', raw_snps]
 		if self.cfg['cluster_exec']:
@@ -206,7 +206,11 @@ class filter_germline(luigi.Task):
 			pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
 
 		for file in [raw_snps, raw_indels, filtered_snps, filtered_indels]:
-			os.remove(file)
+			try:
+				os.remove(file)
+				os.remove(file + '.idx')
+			except:
+				pass
 
 class mutect2(luigi.Task):
 	priority = 87
@@ -438,7 +442,7 @@ class scalpel_export(luigi.Task):
 		else:
 			pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
 
-class vcf2maf(luigi.Task):
+class vcf2maf_tumor(luigi.Task):
 	priority = 85
 	# resources = {'threads': 1}
 	cfg = luigi.DictParameter()
@@ -453,7 +457,7 @@ class vcf2maf(luigi.Task):
 		return {'filter_mutect2': filter_mutect2(case=self.case, cfg=self.cfg)}
 
 	def output(self):
-		outputs = {'vcf2maf': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variants', '%s.maf' % self.case)), 'vep': luigi.LocalTarget('%s.vep.vcf' % self.input()['filter_mutect2']['filter_mutect2'].path.split('.vcf')[0]), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_vcf2maf_err.txt' % self.case))}
+		outputs = {'vcf2maf': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variants', '%s.maf' % self.case)), 'vep': luigi.LocalTarget('%s.vep.vcf' % self.input()['filter_mutect2']['filter_mutect2'].path.split('.vcf')[0]), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_vcf2maf_tumor_err.txt' % self.case))}
 		for task in outputs:
 			if isinstance(outputs[task], luigi.LocalTarget):
 				pipeline_utils.confirm_path(outputs[task].path)
@@ -469,6 +473,40 @@ class vcf2maf(luigi.Task):
 		cmd = ['perl', '/root/pipeline/code/source/vcf2maf/vcf2maf.pl', '--ref-fasta', self.cfg['fasta_file'], '--vep-forks', self.cfg['max_threads'], '--input-vcf', input_vcf, '--output-maf', self.output()['vcf2maf'].path, '--tumor-id', '%s_T' % self.case]
 		if 'N' in self.cfg['cases'][self.case]:
 			cmd += ['--normal-id', '%s_N' % self.case]
+		if self.cfg['cluster_exec']:
+			pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=16, cfg=self.cfg, err_log=self.output()['err_log'].path)
+		else:
+			pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
+
+class vcf2maf_germline(luigi.Task):
+	priority = 85
+	# resources = {'threads': 1}
+	cfg = luigi.DictParameter()
+
+	case = luigi.Parameter()
+
+	@property # This is necessary to assign a dynamic value to the 'threads' resource within a task
+	def resources(self):
+		return {'threads': self.cfg['max_threads']}
+
+	def requires(self):
+		return {'filter_germline': filter_germline(case=self.case, cfg=self.cfg)}
+
+	def output(self):
+		outputs = {'vcf2maf': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variants', '%s_germline.maf' % self.case)), 'vep': luigi.LocalTarget('%s.vep.vcf' % self.input()['filter_germline']['filter_germline'].path.split('.vcf')[0]), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_vcf2maf_germline_err.txt' % self.case))}
+		for task in outputs:
+			if isinstance(outputs[task], luigi.LocalTarget):
+				pipeline_utils.confirm_path(outputs[task].path)
+		return outputs
+
+	def run(self):
+		if self.input()['filter_germline']['filter_germline'].path.endswith('.gz'):
+			input_vcf = self.input()['filter_germline']['filter_germline'].path.split('.gz')[0]
+			with gzip.open(self.input()['filter_germline']['filter_germline'].path, 'rb') as vcf_in, open(input_vcf, 'wb') as vcf_out:
+				shutil.copyfileobj(vcf_in, vcf_out)
+		else:
+			input_vcf = self.input()['filter_germline']['filter_germline'].path.endswith('.gz')
+		cmd = ['perl', '/root/pipeline/code/source/vcf2maf/vcf2maf.pl', '--ref-fasta', self.cfg['fasta_file'], '--vep-forks', self.cfg['max_threads'], '--input-vcf', input_vcf, '--output-maf', self.output()['vcf2maf'].path, '--tumor-id', '%s_N' % self.case]
 		if self.cfg['cluster_exec']:
 			pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=16, cfg=self.cfg, err_log=self.output()['err_log'].path)
 		else:
@@ -523,9 +561,9 @@ class variant_calling(luigi.Task):
 	def requires(self):
 		# requirements = {'scalpel_export': scalpel_export(case=self.case, cfg=self.cfg),
 		# 'lofreq': lofreq(case=self.case, cfg=self.cfg),
-		requirements = {'vcf2maf': vcf2maf(case=self.case, cfg=self.cfg)}
+		requirements = {'vcf2maf_tumor': vcf2maf_tumor(case=self.case, cfg=self.cfg)}
 		if 'N' in self.cfg['cases'][self.case]:
-			requirements['filter_germline'] = filter_germline(case=self.case, cfg=self.cfg)
+			requirements['vcf2maf_germline'] = vcf2maf_germline(case=self.case, cfg=self.cfg)
 		# if 'N' in self.cfg['cases'][self.case]:
 		# 	requirements['strelka'] = strelka(case=self.case, cfg=self.cfg)
 		return requirements
