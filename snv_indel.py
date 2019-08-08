@@ -458,7 +458,7 @@ class variant_calling(luigi.Task):
 	def requires(self):
 		# requirements = {'scalpel_export': scalpel_export(case=self.case, cfg=self.cfg),
 		# 'lofreq': lofreq(case=self.case, cfg=self.cfg),
-		requirements = {'vcf2maf': vcf2maf(case=self.case, cfg=self.cfg)}
+		requirements = {'vcf2maf': vcf2maf(case=self.case, cfg=self.cfg), haplotype_caller(case=self.case, cfg=self.cfg)}
 		# if 'N' in self.cfg['cases'][self.case]:
 		# 	requirements['strelka'] = strelka(case=self.case, cfg=self.cfg)
 		return requirements
