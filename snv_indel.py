@@ -457,7 +457,7 @@ class fpfilter(luigi.Task):
 		return {'filter_mutect2': filter_mutect2(case=self.case, cfg=self.cfg), 'preprocess': preprocess.preprocess(case=self.case, sample='T', cfg=self.cfg)}
 
 	def output(self):
-		outputs = {'fpfilter': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variants', '%s.fpfilter.vcf' % self.case)), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_fpfilter_err.txt' % self.case))}
+		outputs = {'fpfilter': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variant_prep', '%s.fpfilter.vcf' % self.case)), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_fpfilter_err.txt' % self.case))}
 		for task in outputs:
 			if isinstance(outputs[task], luigi.LocalTarget):
 				pipeline_utils.confirm_path(outputs[task].path)
