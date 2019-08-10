@@ -1,5 +1,8 @@
 #!/bin/bash
 . /root/.profile
+cd /opt
+wget https://github.com/genome/bam-readcount/archive/v0.7.4.tar.gz && tar xvzf v0.7.4.tar.gz && rm -f v0.7.4.tar.gz
+cd /opt/bam-readcount-0.7.4 && mkdir build && cd build && cmake ../ && make deps && make -j && make install
 cd /root
 apt-get -y install libapache-dbi-perl libtry-tiny-perl
 alias python=/usr/bin/python3.6
