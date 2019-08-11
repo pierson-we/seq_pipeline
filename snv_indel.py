@@ -267,11 +267,60 @@ class filter_mutect2(luigi.Task):
 		return outputs
 
 	def run(self):
-		cmd = ['gatk4', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], 'FilterMutectCalls', '-R', self.cfg['fasta_file'], '-V', self.input()['mutect2']['mutect2'].path, '-O', self.output()['filter_mutect2'].path]
+		file_base = self.output()['filter_germline'].path.split('.vcf.gz')[0]
+		filtermutect = file_base + '.FilterMutectCalls.vcf'
+		raw_snps = file_base + '.snps.raw.vcf'
+		raw_indels = file_base + '.indels.raw.vcf'
+		filtered_snps = file_base + '.snps.filtered.vcf'
+		filtered_indels = file_base + '.indels.filtered.vcf'
+
+		# use default FilterMutectCalls first
+		cmd = ['gatk4', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], 'FilterMutectCalls', '-R', self.cfg['fasta_file'], '-V', self.input()['mutect2']['mutect2'].path, '-O', filtermutect]
 		if self.cfg['cluster_exec']:
 			pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=16, cfg=self.cfg, err_log=self.output()['err_log'].path)
 		else:
 			pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
+		# select snps
+		cmd = ['gatk4', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], 'SelectVariants', '-R', self.cfg['fasta_file'], '-V', filtermutect, '--select-type-to-include', 'SNP', '-O', raw_snps]
+		if self.cfg['cluster_exec']:
+			pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=16, cfg=self.cfg)
+		else:
+			pipeline_utils.command_call(cmd)
+		# select indels
+		cmd = ['gatk4', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], 'SelectVariants', '-R', self.cfg['fasta_file'], '-V', self.input()['haplotype_caller']['haplotype_caller'].path, '--select-type-to-include', 'INDEL', '-O', raw_indels]
+		if self.cfg['cluster_exec']:
+			pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=16, cfg=self.cfg)
+		else:
+			pipeline_utils.command_call(cmd)
+		# filter snps
+		cmd = ['gatk4', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], 'VariantFiltration', '-R', self.cfg['fasta_file'], '-V', raw_snps, '-O', filtered_snps]
+		for filter_name, filter_expression in [('"QD2"', '"QD < 2.0"'), ('"FS60"', '"FS > 60.0"'), ('"MQ40"', '"MQ < 40.0"'), ('"MQRS-12.5"', '"MQRankSum < -12.5"'), ('"RPRS-8"', '"ReadPosRankSum < -8.0"'), ('"Q30"', '"QUAL < 30.0"'), ('"SOR3"', '"SOR > 3.0"'), ('"FS60"', '"FS > 60.0"')]:
+			cmd += ['--filter-name', filter_name, '--filter-expression', filter_expression]
+		if self.cfg['cluster_exec']:
+			pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=16, cfg=self.cfg)
+		else:
+			pipeline_utils.command_call(cmd)
+		# filter indels
+		cmd = ['gatk4', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], 'VariantFiltration', '-R', self.cfg['fasta_file'], '-V', raw_indels, '-O', filtered_indels]
+		for filter_name, filter_expression in [('"QD2"', '"QD < 2.0"'), ('"FS200"', '"FS > 200.0"'), ('"RPRS-20"', '"ReadPosRankSum < -20.0"'), ('"Q30"', '"QUAL < 30.0"')]:
+			cmd += ['--filter-name', filter_name, '--filter-expression', filter_expression]
+		if self.cfg['cluster_exec']:
+			pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=16, cfg=self.cfg)
+		else:
+			pipeline_utils.command_call(cmd)
+		# combine snps and indels
+		cmd = ['java', '-Djava.io.tmpdir=%s' % self.cfg['tmp_dir'], '-jar', '$PICARD', 'MergeVcfs', 'I=%s' % filtered_snps, 'I=%s' % filtered_indels, 'O=%s' % self.output()['filter_mutect2'].path]
+		if self.cfg['cluster_exec']:
+			pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=16, cfg=self.cfg, err_log=self.output()['err_log'].path)
+		else:
+			pipeline_utils.command_call(cmd, err_log=self.output()['err_log'].path)
+
+		for file in [filtermutect, raw_snps, raw_indels, filtered_snps, filtered_indels]:
+			try:
+				os.remove(file)
+				os.remove(file + '.idx')
+			except:
+				pass
 
 class lofreq(luigi.Task):
 	priority = 87
