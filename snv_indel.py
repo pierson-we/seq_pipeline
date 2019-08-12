@@ -287,7 +287,7 @@ class filter_mutect2(luigi.Task):
 		else:
 			pipeline_utils.command_call(cmd)
 		# select indels
-		cmd = ['gatk4', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], 'SelectVariants', '-R', self.cfg['fasta_file'], '-V', self.input()['haplotype_caller']['haplotype_caller'].path, '--select-type-to-include', 'INDEL', '-O', raw_indels]
+		cmd = ['gatk4', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], 'SelectVariants', '-R', self.cfg['fasta_file'], '-V', filtermutect, '--select-type-to-include', 'INDEL', '-O', raw_indels]
 		if self.cfg['cluster_exec']:
 			pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=16, cfg=self.cfg)
 		else:
