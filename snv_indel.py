@@ -267,7 +267,7 @@ class filter_mutect2(luigi.Task):
 		return outputs
 
 	def run(self):
-		file_base = self.output()['filter_germline'].path.split('.vcf.gz')[0]
+		file_base = self.output()['filter_mutect2'].path.split('.vcf.gz')[0]
 		filtermutect = file_base + '.FilterMutectCalls.vcf'
 		raw_snps = file_base + '.snps.raw.vcf'
 		raw_indels = file_base + '.indels.raw.vcf'
