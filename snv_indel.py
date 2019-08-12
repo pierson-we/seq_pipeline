@@ -297,7 +297,7 @@ class filter_mutect2(luigi.Task):
 		for filter_name, filter_expression in [('"FS60"', '"FS > 60.0"'), ('"MQ40"', '"MQ < 40.0"'), ('"MQRS-12.5"', '"MQRankSum < -12.5"'), ('"RPRS-8"', '"ReadPosRankSum < -8.0"'), ('"SOR3"', '"SOR > 3.0"'), ('"FS60"', '"FS > 60.0"')]: # , ('"Q30"', '"QUAL < 30.0"')
 			cmd += ['--filter-name', filter_name, '--filter-expression', filter_expression]
 		if not 'N' in self.cfg['cases'][self.case]:
-			cmd += ['--filter-name', '"TLOD10"', '--filter-expression', '"TLOD < 10.0"', '--filter-name', '"QD5"', '--filter-expression', '"QD < 5.0"']
+			cmd += ['--filter-name', '"TLOD9"', '--filter-expression', '"TLOD < 9.0"', '--filter-name', '"QD2"', '--filter-expression', '"QD < 2.0"']
 		else:
 			cmd += ['--filter-name', '"QD2"', '--filter-expression', '"QD < 2.0"']
 		if self.cfg['cluster_exec']:
@@ -309,7 +309,7 @@ class filter_mutect2(luigi.Task):
 		for filter_name, filter_expression in [('"FS200"', '"FS > 200.0"'), ('"RPRS-20"', '"ReadPosRankSum < -20.0"')]: # , ('"Q30"', '"QUAL < 30.0"')
 			cmd += ['--filter-name', filter_name, '--filter-expression', filter_expression]
 		if not 'N' in self.cfg['cases'][self.case]:
-			cmd += ['--filter-name', '"TLOD10"', '--filter-expression', '"TLOD < 10.0"', '--filter-name', '"QD5"', '--filter-expression', '"QD < 5.0"']
+			cmd += ['--filter-name', '"TLOD9"', '--filter-expression', '"TLOD < 9.0"', '--filter-name', '"QD2"', '--filter-expression', '"QD < 2.0"']
 		else:
 			cmd += ['--filter-name', '"QD2"', '--filter-expression', '"QD < 2.0"']
 		if self.cfg['cluster_exec']:
