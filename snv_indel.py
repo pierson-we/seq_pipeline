@@ -294,20 +294,24 @@ class filter_mutect2(luigi.Task):
 			pipeline_utils.command_call(cmd)
 		# filter snps
 		cmd = ['gatk4', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], 'VariantFiltration', '-R', self.cfg['fasta_file'], '-V', raw_snps, '-O', filtered_snps]
-		for filter_name, filter_expression in [('"QD2"', '"QD < 2.0"'), ('"FS60"', '"FS > 60.0"'), ('"MQ40"', '"MQ < 40.0"'), ('"MQRS-12.5"', '"MQRankSum < -12.5"'), ('"RPRS-8"', '"ReadPosRankSum < -8.0"'), ('"SOR3"', '"SOR > 3.0"'), ('"FS60"', '"FS > 60.0"')]: # , ('"Q30"', '"QUAL < 30.0"')
+		for filter_name, filter_expression in [('"FS60"', '"FS > 60.0"'), ('"MQ40"', '"MQ < 40.0"'), ('"MQRS-12.5"', '"MQRankSum < -12.5"'), ('"RPRS-8"', '"ReadPosRankSum < -8.0"'), ('"SOR3"', '"SOR > 3.0"'), ('"FS60"', '"FS > 60.0"')]: # , ('"Q30"', '"QUAL < 30.0"')
 			cmd += ['--filter-name', filter_name, '--filter-expression', filter_expression]
 		if not 'N' in self.cfg['cases'][self.case]:
-			cmd += ['--filter-name', '"TLOD12"', '--filter-expression', '"TLOD < 12.0"']
+			cmd += ['--filter-name', '"TLOD10"', '--filter-expression', '"TLOD < 10.0"', '--filter-name', '"QD5"', '--filter-expression', '"QD < 5.0"']
+		else:
+			cmd += ['--filter-name', '"QD2"', '--filter-expression', '"QD < 2.0"']
 		if self.cfg['cluster_exec']:
 			pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=16, cfg=self.cfg)
 		else:
 			pipeline_utils.command_call(cmd)
 		# filter indels
 		cmd = ['gatk4', '--java-options', '"-Djava.io.tmpdir=%s"' % self.cfg['tmp_dir'], 'VariantFiltration', '-R', self.cfg['fasta_file'], '-V', raw_indels, '-O', filtered_indels]
-		for filter_name, filter_expression in [('"QD2"', '"QD < 2.0"'), ('"FS200"', '"FS > 200.0"'), ('"RPRS-20"', '"ReadPosRankSum < -20.0"')]: # , ('"Q30"', '"QUAL < 30.0"')
+		for filter_name, filter_expression in [('"FS200"', '"FS > 200.0"'), ('"RPRS-20"', '"ReadPosRankSum < -20.0"')]: # , ('"Q30"', '"QUAL < 30.0"')
 			cmd += ['--filter-name', filter_name, '--filter-expression', filter_expression]
 		if not 'N' in self.cfg['cases'][self.case]:
-			cmd += ['--filter-name', '"TLOD12"', '--filter-expression', '"TLOD < 12.0"']
+			cmd += ['--filter-name', '"TLOD10"', '--filter-expression', '"TLOD < 10.0"', '--filter-name', '"QD5"', '--filter-expression', '"QD < 5.0"']
+		else:
+			cmd += ['--filter-name', '"QD2"', '--filter-expression', '"QD < 2.0"']
 		if self.cfg['cluster_exec']:
 			pipeline_utils.cluster_command_call(self, cmd, threads=self.cfg['max_threads'], ram=16, cfg=self.cfg)
 		else:
