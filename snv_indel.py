@@ -625,7 +625,7 @@ class msisensor(luigi.Task):
 		return requirements
 
 	def output(self):
-		outputs = {'msisensor': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variants', '%s_updated.msisensor' % self.case)), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_msisensor_err.txt' % self.case))}
+		outputs = {'msisensor': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variants', '%s.msisensor' % self.case)), 'err_log': luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_msisensor_err.txt' % self.case))}
 		# if 'N' in self.cfg['cases'][self.case]:
 		# 	outputs['msisensor_matched'] = luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'variants', '%s_matched.msisensor' % self.case))
 		# 	outputs['err_log_matched'] = luigi.LocalTarget(os.path.join(self.cfg['output_dir'], self.case, 'log', '%s_msisensor_matched_err.txt' % self.case))
